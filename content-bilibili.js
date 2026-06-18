@@ -148,11 +148,14 @@
     const cid = (d.pages && d.pages[part - 1] && d.pages[part - 1].cid) || d.cid;
 
     report(2, "获取字幕列表…", meta);
-    // WBI 签名版（官方标准做法，避免风控）；失败再兜底普通版
+    // WBI 签名版（官方标准做法，避免风控）；失败再兜底普通版。
+    // 每次结果都做「归属校验」ownSubtitles：B 站对「无字幕视频」的 player/wbi/v2 请求会偶发
+    // 返回一条指向「别的视频」的幽灵 AI 字幕（每次内容还不一样）；若不滤掉，就会把别人的字幕
+    // 当成本视频字幕喂给模型，导致整篇「幻觉」。详见 ownSubtitles 注释。
     const signed = await wbiQuery({ aid, cid });
-    let subs = await fetchSubtitleList(`https://api.bilibili.com/x/player/wbi/v2?${signed}`);
+    let subs = ownSubtitles(await fetchSubtitleList(`https://api.bilibili.com/x/player/wbi/v2?${signed}`), aid, cid);
     if (!subs.length) {
-      subs = await fetchSubtitleList(`https://api.bilibili.com/x/player/v2?aid=${aid}&cid=${cid}`);
+      subs = ownSubtitles(await fetchSubtitleList(`https://api.bilibili.com/x/player/v2?aid=${aid}&cid=${cid}`), aid, cid);
     }
 
     if (!subs.length) {
@@ -193,6 +196,23 @@
     } catch (e) {
       return [];
     }
+  }
+
+  // 字幕归属校验：B 站存在一个偶发 bug——对「确实没有字幕」的视频请求 player/wbi/v2，
+  // 它会返回一条指向「别的视频」的幽灵 AI 字幕（auth_key、文件名每次都不同，内容也每次都换），
+  // 直接下载就会把别人的整篇字幕当成本视频字幕喂给模型，表现为「整篇幻觉、刷新一次换一个视频」。
+  // 真 AI 字幕的 URL 形如 .../ai_subtitle/prod/{aid}{cid}{hash}，路径里必然以前缀方式内嵌本视频的 aid+cid；
+  // 幽灵字幕内嵌的是别的视频的 aid/cid。据此过滤：AI 字幕的 prod 文件名必须以当前 aid+cid 开头，否则丢弃。
+  // （只校验 AI 字幕；人工上传字幕走不同的 URL 格式，不在此列，避免误伤。）
+  function ownSubtitles(subs, aid, cid) {
+    const ownerKey = `${aid}${cid}`;
+    return (subs || []).filter((s) => {
+      const url = s?.subtitle_url || "";
+      const isAi = /^ai/i.test(s?.lan || "") || /aisubtitle\.hdslb\.com/.test(url);
+      if (!isAi) return true;
+      const match = url.match(/\/prod\/([^/?#]+)/);
+      return !!match && match[1].startsWith(ownerKey);
+    });
   }
 
   // ---------- 读取评论（热门排序，带点赞数；供「评论印证」用） ----------
