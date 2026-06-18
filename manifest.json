@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "DeepSeek 工具箱",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "由 DeepSeek 驱动的浏览器小工具集合。当前工具：YouTube / 哔哩哔哩 视频总结（抓取字幕一键生成中文文档）。",
   "permissions": ["storage", "activeTab"],
   "host_permissions": [
