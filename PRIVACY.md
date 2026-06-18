@@ -52,7 +52,7 @@ DeepSeek 工具箱（下称「本扩展」）是一款帮助用户对 YouTube、
 
 ### 联系方式
 
-如对本隐私政策有任何疑问，请通过以下邮箱联系：**nasneo777@gmail.com**
+如对本隐私政策有任何疑问，请通过以下邮箱联系：**bigbugbbb@gmail.com**
 
 ---
 
@@ -100,4 +100,4 @@ If this policy changes, we will update this document and the "Effective Date" at
 
 ### Contact
 
-For any questions about this privacy policy, contact: **nasneo777@gmail.com**
+For any questions about this privacy policy, contact: **bigbugbbb@gmail.com**
