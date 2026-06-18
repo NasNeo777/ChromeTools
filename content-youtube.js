@@ -105,7 +105,7 @@
     // timedtext 被 pot token 门禁返回空时，改用页面“显示转写”面板抓取
     if (!transcript) {
       report(3, "字幕接口受限，改用页面转写面板…", meta);
-      transcript = await getTranscriptViaPanel();
+      transcript = await getTranscriptViaPanel(videoId);
     }
 
     if (!transcript) {
@@ -135,6 +135,14 @@
     return b || null;
   }
 
+  // 找“关闭转写/Close transcript”按钮（面板打开后用于强制重开，避免读到残留面板）
+  function findCloseTranscriptButton() {
+    const isCloseLabel = (s) =>
+      /transcript|转写|轉錄|文字稿|字幕记录|字幕記錄/i.test(s) && /关闭|關閉|close|隐藏|隱藏|hide/i.test(s);
+    const btns = [...document.querySelectorAll("button, [role='button']")];
+    return btns.find((x) => isCloseLabel((x.getAttribute("aria-label") || "").trim())) || null;
+  }
+
   // 读取转写片段：兼容新版(transcript-segment-view-model) 与旧版(ytd-transcript-segment-renderer)
   function readTranscriptSegments() {
     let segs = [...document.querySelectorAll("transcript-segment-view-model")];
@@ -154,10 +162,18 @@
       .trim();
   }
 
-  async function getTranscriptViaPanel() {
-    // 已经有内容就直接读
+  async function getTranscriptViaPanel(videoId) {
+    // 关键防护：转写面板读的是「当前页面」的实时 DOM。YouTube 是 SPA，
+    // 从别的视频切过来时，上一个视频的转写面板可能还残留在 DOM 里。
+    // 若当前页已不是目标视频，直接返回空——宁可上层报「没字幕」，
+    // 也绝不把别的视频的字幕「乱拉」过来。
+    if (videoId && getVideoId() !== videoId) return "";
+
+    // 面板已经开着时：无法确认它属于当前视频还是上个视频的残留，不能盲信。
+    // 先关掉它，强制重新打开，让 YouTube 载入「当前视频」的转写后再读。
     if (readTranscriptSegments().length) {
-      return collectSegments();
+      const close = findCloseTranscriptButton();
+      if (close) { try { close.click(); } catch (e) {} await sleep(400); }
     }
     // 展开描述区，露出“转写文稿”入口
     const expand = document.querySelector("#expand, tp-yt-paper-button#expand, #description #expand");
@@ -168,11 +184,14 @@
     if (!btn) return "";
     try { btn.click(); } catch (e) {}
 
+    // 再次确认页面没在等待期间被切走（异步点击/等待中用户可能切了视频）
     const segs = await waitFor(() => {
+      if (videoId && getVideoId() !== videoId) return null;
       const s = readTranscriptSegments();
       return s.length ? s : null;
     }, 8000);
     if (!segs || !segs.length) return "";
+    if (videoId && getVideoId() !== videoId) return "";
     return collectSegments();
   }
 
