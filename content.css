@@ -78,6 +78,8 @@
 .ds-panel-body {
   padding: 14px 16px;
   overflow-y: auto;
+  flex: 1 1 auto;
+  min-height: 0;
   font-size: 14px;
   line-height: 1.7;
 }
@@ -179,9 +181,96 @@
 }
 .ds-doc { animation: none; }
 
+/* ---- 追问对话区 ---- */
+.ds-chat {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 auto;
+  border-top: 1px solid #eceef5;
+  background: #fafbff;
+}
+.ds-chat-thread {
+  overflow-y: auto;
+  max-height: 240px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.ds-chat-thread:empty { display: none; }
+.ds-chat-msg { display: flex; }
+.ds-chat-text {
+  max-width: 85%;
+  padding: 7px 11px;
+  border-radius: 12px;
+  font-size: 13px;
+  line-height: 1.6;
+  word-break: break-word;
+}
+.ds-chat-user { justify-content: flex-end; }
+.ds-chat-user .ds-chat-text {
+  background: linear-gradient(135deg, #4d6bfe, #6d3bfe);
+  color: #fff;
+  border-bottom-right-radius: 4px;
+}
+.ds-chat-assistant { justify-content: flex-start; }
+.ds-chat-assistant .ds-chat-text {
+  background: #fff;
+  color: #1f2328;
+  border: 1px solid #e7e9f2;
+  border-bottom-left-radius: 4px;
+}
+.ds-chat-assistant .ds-chat-text h2 { font-size: 14px; margin: 8px 0 4px; color: #4d6bfe; }
+.ds-chat-assistant .ds-chat-text h3 { font-size: 13px; margin: 6px 0 3px; }
+.ds-chat-assistant .ds-chat-text ul { margin: 4px 0; padding-left: 18px; }
+.ds-chat-assistant .ds-chat-text p { margin: 4px 0; }
+.ds-chat-empty { color: #8c959f; font-size: 12px; }
+
+.ds-chat-input-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 8px 10px;
+  border-top: 1px solid #eceef5;
+}
+.ds-chat-input {
+  flex: 1 1 auto;
+  resize: none;
+  max-height: 110px;
+  padding: 8px 10px;
+  font-size: 13px;
+  line-height: 1.5;
+  font-family: inherit;
+  color: #1f2328;
+  background: #fff;
+  border: 1px solid #d7daea;
+  border-radius: 10px;
+  outline: none;
+}
+.ds-chat-input:focus { border-color: #4d6bfe; }
+.ds-chat-send {
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(135deg, #4d6bfe, #6d3bfe);
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(77, 107, 254, 0.35);
+}
+.ds-chat-send:hover { filter: brightness(1.08); }
+
 /* 深色模式适配 */
 @media (prefers-color-scheme: dark) {
   .ds-panel { background: #212121; color: #e8e8e8; }
+  .ds-chat { background: #1b1b1b; border-top-color: #3a3a3a; }
+  .ds-chat-input-row { border-top-color: #3a3a3a; }
+  .ds-chat-assistant .ds-chat-text { background: #2a2a2a; color: #e8e8e8; border-color: #3a3a3a; }
+  .ds-chat-input { background: #2a2a2a; color: #e8e8e8; border-color: #444; }
+  .ds-chat-input:focus { border-color: #8ab4f8; }
   .ds-panel-body h3 { color: #e8e8e8; }
   .ds-meta { color: #aaa; border-bottom-color: #3a3a3a; }
   .ds-step-ic { background: #333; }

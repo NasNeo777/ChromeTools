@@ -25,6 +25,16 @@
   let rafPending = false;
   let activeSteps = [];
 
+  // ---------- 对话（追问）状态 ----------
+  // 当前结果对应的上下文，供追问时一起发给后台（文字稿 / 评论 / 元信息 / 模式）
+  let curMode = "summary";
+  let curTranscript = "";
+  let curComments = "";
+  let curMeta = {};
+  // 对话历史：[{role, content}]，首条 assistant 即本次生成的总结/分析（仅作模型上下文，不在对话区重复渲染）
+  let chatHistory = [];
+  let chatBusy = false;
+
   // 各模式的文案：面板标题 / 流式提示 / 末步（DeepSeek）标签。needsComments 表示该模式还需读取评论。
   const MODES = {
     summary:   { title: "📄 视频总结",   gen: "DeepSeek 生成中…", step: "DeepSeek 生成总结" },
@@ -74,7 +84,15 @@
           <button class="ds-icon-btn" id="ds-close">✕</button>
         </div>
       </div>
-      <div class="ds-panel-body" id="ds-body"></div>`;
+      <div class="ds-panel-body" id="ds-body"></div>
+      <div class="ds-chat" id="ds-chat" style="display:none">
+        <div class="ds-chat-thread" id="ds-chat-thread"></div>
+        <div class="ds-chat-input-row">
+          <textarea id="ds-chat-input" class="ds-chat-input" rows="1"
+            placeholder="追问视频内容，AI 会结合字幕补充…"></textarea>
+          <button class="ds-chat-send" id="ds-chat-send" title="发送（Enter）">↑</button>
+        </div>
+      </div>`;
     document.body.appendChild(panel);
     panel.querySelector("#ds-close").addEventListener("click", () => (panel.style.display = "none"));
     panel.querySelector("#ds-copy").addEventListener("click", () => {
@@ -82,7 +100,89 @@
       flash(panel.querySelector("#ds-copy"), "已复制");
     });
     panel.querySelector("#ds-download").addEventListener("click", downloadMd);
+
+    // 对话输入：Enter 发送，Shift+Enter 换行；输入框随内容自适应高度
+    const input = panel.querySelector("#ds-chat-input");
+    panel.querySelector("#ds-chat-send").addEventListener("click", sendChat);
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendChat(); }
+    });
+    input.addEventListener("input", () => {
+      input.style.height = "auto";
+      input.style.height = Math.min(input.scrollHeight, 110) + "px";
+    });
     return panel;
+  }
+
+  // ---------- 对话（追问） ----------
+  function showChat() { ensurePanel().querySelector("#ds-chat").style.display = "flex"; }
+  function hideChat() {
+    if (!panel) return;
+    const c = panel.querySelector("#ds-chat");
+    if (c) { c.style.display = "none"; c.querySelector("#ds-chat-thread").innerHTML = ""; }
+    chatHistory = [];
+    chatBusy = false;
+  }
+  function scrollChat() {
+    const t = panel && panel.querySelector("#ds-chat-thread");
+    if (t) t.scrollTop = t.scrollHeight;
+  }
+  // 追加一条消息气泡，返回其内容元素（assistant 流式时往里写）
+  function appendChatMsg(role) {
+    const thread = ensurePanel().querySelector("#ds-chat-thread");
+    const row = document.createElement("div");
+    row.className = "ds-chat-msg ds-chat-" + role;
+    const text = document.createElement("div");
+    text.className = "ds-chat-text";
+    row.appendChild(text);
+    thread.appendChild(row);
+    scrollChat();
+    return text;
+  }
+
+  function sendChat() {
+    if (chatBusy) return;
+    const input = ensurePanel().querySelector("#ds-chat-input");
+    const q = input.value.trim();
+    if (!q) return;
+    chatBusy = true;
+    input.value = "";
+    input.style.height = "auto";
+
+    appendChatMsg("user").textContent = q;
+    chatHistory.push({ role: "user", content: q });
+
+    const out = appendChatMsg("assistant");
+    out.innerHTML = `<span class="ds-mini-spinner"></span>`;
+    let answer = "";
+
+    const port = chrome.runtime.connect({ name: "summarize" });
+    port.postMessage({
+      type: "CHAT", mode: curMode, transcript: curTranscript,
+      comments: curComments, meta: curMeta, history: chatHistory
+    });
+    port.onMessage.addListener((m) => {
+      if (m.type === "chunk") {
+        answer += m.delta;
+        out.innerHTML = renderDoc(answer);
+        scrollChat();
+      } else if (m.type === "done") {
+        if (!answer) out.innerHTML = `<span class="ds-chat-empty">（没有更多内容）</span>`;
+        chatHistory.push({ role: "assistant", content: answer });
+        chatBusy = false;
+        port.disconnect();
+      } else if (m.type === "error") {
+        out.innerHTML = `<span class="ds-error">⚠ ${escapeHtml(m.error)}</span>`;
+        chatBusy = false;
+        port.disconnect();
+      }
+    });
+    port.onDisconnect.addListener(() => {
+      if (chatBusy) {
+        if (!answer) out.innerHTML = `<span class="ds-error">连接中断，请重试。</span>`;
+        chatBusy = false;
+      }
+    });
   }
 
   function body() { return ensurePanel().querySelector("#ds-body"); }
@@ -207,6 +307,7 @@
     // 评论模式多一步「读取评论」；末步统一是 DeepSeek 处理
     activeSteps = wantComments ? [...dataSteps, "读取评论", L.step] : [...dataSteps, L.step];
     setPanelTitle(L.title);
+    hideChat();
     renderProgress(1, "正在启动…");
 
     const fail = (msg) => {
@@ -255,6 +356,9 @@
       }
     }
 
+    // 记下本次结果的上下文，供「追问」时连同发给后台
+    curMode = mode; curMeta = meta; curTranscript = transcript; curComments = comments;
+
     // 末步：后台流式调用 DeepSeek
     renderProgress(activeSteps.length, L.gen, meta);
     const port = chrome.runtime.connect({ name: "summarize" });
@@ -267,6 +371,9 @@
       } else if (m.type === "done") {
         lastTitle = m.meta?.title || lastTitle;
         scheduleStreamRender(true);
+        // 生成完毕：用本次结果作为对话起点，开放追问
+        chatHistory = lastSummary ? [{ role: "assistant", content: lastSummary }] : [];
+        showChat();
         inFlight = false;
         port.disconnect();
       } else if (m.type === "error") {

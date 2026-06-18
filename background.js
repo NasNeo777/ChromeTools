@@ -114,11 +114,17 @@ function buildCritiquePrompt(language, meta) {
     `B. 冷读术 / 巴纳姆效应：把人人都中的笼统描述说得像专属于你；正反都能自圆、马后炮、不可证伪。\n` +
     `C. 无差别恭维 / 抬高观众（“你是天才/有潜力/很特别”）。\n` +
     `D. 制造焦虑、紧迫、稀缺，贩卖梦想。\n` +
-    `E. 逻辑谬误：稻草人、非黑即白、滑坡、诉诸权威/自然/传统、相关当因果、以偏概全、轶事当证据、樱桃挑选等。\n` +
+    `E. 逻辑谬误：稻草人、非黑即白（虚假两难，如“为了健康就别吃巧克力”）、滑坡、` +
+    `诉诸权威（如“我们学食品的”用身份压制质疑而非给理由）、诉诸自然/传统、相关当因果、以偏概全、轶事当证据、樱桃挑选、` +
+    `**偷换概念/概念混淆**（把 A 悄悄换成 B 来论证，如把“工艺需求”等同于“非为省钱”、把“合法”等同于“无害”）、` +
+    `**不当类比/错误类比**（用一个不可比的例子套结论，如用“面包加防腐剂很正常”类比“巧克力成分替代/标注”）、` +
+    `**转移焦点/红鲱鱼**（用无关话题岔开真正的争议点）。\n` +
     `F. 认知偏误利用：幸存者偏差、确认偏误、锚定、沉没成本、光环效应、从众。\n` +
     `G. 骗局/套路原型（判断像不像，可“都不像”，**不像就别强行套**）：庞氏/拉人头MLM、杀猪盘、拉高出货、` +
     `预付费诈骗、知识付费漏斗（免费引流→身世故事→升单卖课）、命理/占卜（冷读+巴纳姆）、伪科学神药速成。\n` +
-    `H. 可证伪性（波普尔）：核心说法能否被验证或证伪。\n\n` +
+    `H. 可证伪性（波普尔）：核心说法能否被验证或证伪。\n` +
+    `I. 利益相关方 / 公关洗地：以“科普”“专业”为外衣，客观上为某商业行为（降本、成分替代、模糊标注、推卸责任、淡化风险）做合理化辩护；` +
+    `典型信号——只讲对商家有利的一面、把消费者的合理担忧说成“无知/矫情”、用“合规/工艺/正常操作”消解知情权诉求。\n\n` +
 
     `【关于评判博主水平】可以基于内容客观推断博主的专业水平，但要**明确这是推测、非真实证书**，` +
     `保持尊重、对事不对人，依据是：术语准确度、是否引用研究/数据、逻辑严谨度、知识体系完整度、是否有原创洞见。\n\n` +
@@ -135,6 +141,13 @@ function buildCritiquePrompt(language, meta) {
     `<h2>博主的立场与倾向</h2>：明确说出**博主自己认为什么是对的、站在谁一边、支持或反对什么**（用徽章或加粗点出核心立场）。` +
     `务必区分“他在转述/引用/批驳别人的话”与“他本人的态度”；**特别警惕反讽、阴阳怪气、正话反说、对线打脸**——字面意思、被引用的话可能与他真实态度相反，` +
     `要结合上下文、语气、结尾总结判断其真实倾向，并引用原话佐证。若立场暧昧、中立或前后矛盾，就如实指出“立场不清/有矛盾”。\n` +
+    `<h2>立场与利益相关方</h2>：跳出“知识对不对”的单一维度，从利益与立场层面审视（对照判据库 I）：\n` +
+    `  · **偏向哪一方**：论证客观上更有利于谁——消费者 / 商家·厂商 / 行业 / 监管方？是否在为某一方的利益（降本、成分替代、模糊标注、推卸责任、淡化风险）有意或无意地辩护？引原话佐证。\n` +
+    `  · **科普还是公关**：本质是“帮公众理解科学”，还是“为特定商业行为合理化的公关话术（洗地）”？` +
+    `判断依据是只讲有利一面/淡化风险/把合理担忧污名化等信号，而非单看它自称科普。\n` +
+    `  · **对消费者知情权的影响**：内容是帮助消费者做出知情选择，还是通过混淆概念、淡化风险、转移焦点削弱了消费者对成分/品质的知情权？\n` +
+    `  · **务必公允**：若它确实是中立、平衡、对各方都讲、真心帮公众理解的正经科普，就明确说“立场中立、未见公关/洗地倾向”，**绝不给正常科普扣帽子**；` +
+    `只有证据（原话）确实指向偏袒某方利益时，才点名指出。若视频与商业利益无关（如纯知识/生活/观点类），写“不涉及明显利益相关方，本节略”。\n` +
     `<h2>合理与有价值之处</h2>：**先写这一节**，认真列出说得对、有用、有依据或有启发的点，并说明为什么成立。\n` +
     `<h2>存疑与不足</h2>：指出夸大、缺乏依据、可能误导或逻辑有漏洞之处，逐条说清问题在哪、引用原话。\n` +
     `<h2>论据与证据强度</h2>：对关键主张评估支撑类型，并标注强度（强 / 中 / 弱 / 无）；不可证伪的明确指出。\n` +
@@ -142,6 +155,9 @@ function buildCritiquePrompt(language, meta) {
     `命中就点名技法+括注学术名+引用原话；未命中写“未见明显使用”，不凑数、不上纲上线。\n` +
     `  · **必查【稻草人】（strawman）**：博主要批判/反对的对象，是否被他夸大、简化成一个没人真正主张的极端版本，再去轻松打倒？` +
     `若是，明确指出他立的“靶子”与对方真实立场的差距、以及这如何让结论显得比实际更有力；若无则写“未见稻草人”。\n` +
+    `  · **必查【逻辑陷阱】**：除了事实对错，重点查论证手法本身有没有问题——` +
+    `偷换概念（把 A 换成 B）、不当类比（拿不可比的例子套结论）、诉诸权威（用身份压制质疑而非给理由）、` +
+    `非黑即白（虚假两难）、转移焦点。命中就点名+引原话拆解它如何误导；没有就写“论证逻辑基本干净”。\n` +
     `<h2>套路/骗局模式匹配</h2>：对照 G；像就指出特征，不像就明说“无明显骗局结构、不属于套路”。\n` +
     `<h2>变现意图</h2>：他想让你做什么——关注/买课/消费等？属正常商业还是诱导？看不出就说看不出，不臆测。\n` +
     `<h2>科学/事实核查</h2>：对可验证的说法，说明主流认知是支持、反对还是无定论；分清“有共识/有争议/无依据”，标注不确定。\n` +
@@ -149,6 +165,8 @@ function buildCritiquePrompt(language, meta) {
     `个别表述欠妥需注意→ds-badge-warn；宣扬社会达尔文主义/歧视/蔑视弱者/为剥削压榨或不公辩护→ds-badge-bad）。` +
     `依据人道主义与“人人平等、博爱、反对剥削压榨”的精神，评估其价值观取向；若出现社达、为剥削压榨辩护的诡辩、歧视或非人化倾向，` +
     `引用原话指出、拆穿其诡辩逻辑并说明为何有害；若无道德问题就如实说明“价值观无明显问题”，不要无中生有、不说教。\n` +
+    `  · **消费者视角的价值判断**（涉及商品/消费/食品/品质时必评）：它是否尊重消费者的选择权与知情权？是在鼓励理性消费，` +
+    `还是在打压消费者对品质的合理追求、把“想知道得更清楚/想要更好”说成矫情？引原话评判；不涉及消费议题则跳过。\n` +
     `<h2>博主水平画像</h2>：客观、具体地推断（务必注明“以下为基于内容的推测，非真实证书”），要给细节、不要笼统：\n` +
     `  · **涉及知识领域（具体标签）**：用一个或多个**具体**领域标签标明本视频涉及的学科/领域，` +
     `每个用 <span class="ds-badge ds-badge-info">标签</span>，例如：人工智能 / 机器学习 / 社会心理学 / 认知心理学 / ` +
@@ -238,6 +256,19 @@ async function summarizeStream(transcript, comments, meta, settings, mode, onDel
       ? buildCommentsPrompt(settings.language, meta)
       : buildSummaryPrompt(settings.style, settings.language, meta);
 
+  await streamCompletion(
+    [
+      { role: "system", content: system },
+      { role: "user", content: userContent }
+    ],
+    settings,
+    mode === "translate" ? 1.2 : 0.3,
+    onDelta
+  );
+}
+
+// 通用流式补全：把 messages 发给 DeepSeek，逐 token 回调 onDelta。总结与对话共用。
+async function streamCompletion(messages, settings, temperature, onDelta) {
   const resp = await fetch(DEEPSEEK_ENDPOINT, {
     method: "POST",
     headers: {
@@ -246,11 +277,8 @@ async function summarizeStream(transcript, comments, meta, settings, mode, onDel
     },
     body: JSON.stringify({
       model: settings.model || "deepseek-chat",
-      messages: [
-        { role: "system", content: system },
-        { role: "user", content: userContent }
-      ],
-      temperature: mode === "translate" ? 1.2 : 0.3,
+      messages,
+      temperature,
       stream: true
     })
   });
@@ -283,11 +311,83 @@ async function summarizeStream(transcript, comments, meta, settings, mode, onDel
   }
 }
 
+// ---------- 追问对话：结合「文字稿 + 已生成结果 + 历史问答」回答用户的后续提问 ----------
+function buildChatPrompt(language, meta, mode) {
+  const modeName =
+    { summary: "视频总结", translate: "原文翻译", critique: "批判性分析", comments: "评论印证" }[mode] ||
+    "视频总结";
+  return (
+    `你是这条视频的 AI 助手。用户刚看完你生成的「${modeName}」，现在就视频内容向你追问。\n` +
+    `视频：「${meta.title || ""}」${meta.author ? " · " + meta.author : ""}。\n` +
+    `请用${language}回答，遵守以下要求：\n` +
+    `- **紧扣视频文字稿**直接回答用户的问题，简明扼要、点到为止，不要复述整篇总结。\n` +
+    `- 区分「视频里说的」与「你补充的背景常识」：来自文字稿的内容可点明大致时间点；` +
+    `文字稿没提到的，如实说“视频没提到”，再酌情用常识补充并标注“（补充）”。\n` +
+    `- 不臆造数据、来源、引文；不确定就说不确定。保持中立、就事论事。\n` +
+    `- 上文中第一条 assistant 消息是你之前生成的完整结果，可作背景，但用户的新问题以最新一条为准。\n\n` +
+    HTML_RULE
+  );
+}
+
+// 控制对话历史规模：始终保留首条（已生成的总结，作背景），再从最近往前尽量多带几轮，限制总字数
+function trimHistory(history, maxBudget) {
+  if (!Array.isArray(history) || !history.length) return [];
+  const clip = (s, n) => (s && s.length > n ? s.slice(0, n) + " …（略）" : (s || ""));
+  const first = { role: history[0].role || "assistant", content: clip(history[0].content, 8000) };
+  let used = first.content.length;
+  const rest = [];
+  for (let i = history.length - 1; i >= 1; i--) {
+    const content = clip(history[i].content, 4000);
+    if (used + content.length > maxBudget) break;
+    used += content.length;
+    rest.unshift({ role: history[i].role === "user" ? "user" : "assistant", content });
+  }
+  return [first, ...rest];
+}
+
+async function chatStream(msg, settings, onDelta) {
+  const clip = (s, n) => (s && s.length > n ? s.slice(0, n) + " …（过长已截断）" : (s || ""));
+  const meta = msg.meta || {};
+  const mode = ["translate", "critique", "comments"].includes(msg.mode) ? msg.mode : "summary";
+
+  let context = `【视频文字稿】\n${clip(msg.transcript, 30000)}`;
+  if (msg.comments) context += `\n\n【观众评论】\n${clip(msg.comments, 12000)}`;
+
+  const messages = [
+    { role: "system", content: buildChatPrompt(settings.language, meta, mode) },
+    { role: "user", content: context + "\n\n（以上为背景资料，请据此回答接下来的提问。）" },
+    { role: "assistant", content: "好的，我已了解视频内容，请提问。" },
+    ...trimHistory(msg.history, 24000)
+  ];
+
+  await streamCompletion(messages, settings, 0.4, onDelta);
+}
+
 // ---------- Port：分步进度 + 流式输出 ----------
 chrome.runtime.onConnect.addListener((port) => {
   if (port.name !== "summarize") return;
 
   port.onMessage.addListener(async (msg) => {
+    // 追问对话
+    if (msg?.type === "CHAT") {
+      try {
+        const settings = await getSettings();
+        if (!settings.apiKey) {
+          safePost(port, { type: "error", error: "未设置 DeepSeek API Key，请点击扩展图标配置。" });
+          return;
+        }
+        if (!msg.transcript) {
+          safePost(port, { type: "error", error: "缺少视频文字稿上下文，请重新生成后再追问。" });
+          return;
+        }
+        await chatStream(msg, settings, (delta) => safePost(port, { type: "chunk", delta }));
+        safePost(port, { type: "done", meta: msg.meta || {} });
+      } catch (e) {
+        safePost(port, { type: "error", error: String(e?.message || e) });
+      }
+      return;
+    }
+
     if (msg?.type !== "START") return;
     try {
       const settings = await getSettings();
