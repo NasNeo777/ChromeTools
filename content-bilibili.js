@@ -149,13 +149,12 @@
 
     report(2, "获取字幕列表…", meta);
     // WBI 签名版（官方标准做法，避免风控）；失败再兜底普通版。
-    // 每次结果都做「归属校验」ownSubtitles：B 站对「无字幕视频」的 player/wbi/v2 请求会偶发
-    // 返回一条指向「别的视频」的幽灵 AI 字幕（每次内容还不一样）；若不滤掉，就会把别人的字幕
-    // 当成本视频字幕喂给模型，导致整篇「幻觉」。详见 ownSubtitles 注释。
+    // 两版都走 fetchStableSubs：对同一接口连读两次做「稳定性校验」，滤掉 B 站偶发的「幽灵 AI 字幕」
+    // （随机 hash、每次都换，会把别人的字幕喂给模型导致整篇幻觉）。详见 fetchStableSubs 注释。
     const signed = await wbiQuery({ aid, cid });
-    let subs = ownSubtitles(await fetchSubtitleList(`https://api.bilibili.com/x/player/wbi/v2?${signed}`), aid, cid);
+    let subs = await fetchStableSubs(`https://api.bilibili.com/x/player/wbi/v2?${signed}`);
     if (!subs.length) {
-      subs = ownSubtitles(await fetchSubtitleList(`https://api.bilibili.com/x/player/v2?aid=${aid}&cid=${cid}`), aid, cid);
+      subs = await fetchStableSubs(`https://api.bilibili.com/x/player/v2?aid=${aid}&cid=${cid}`);
     }
 
     if (!subs.length) {
@@ -189,29 +188,42 @@
     return { transcript, meta };
   }
 
-  async function fetchSubtitleList(url) {
+  // 读取字幕列表，区分「请求成功」与「请求失败/风控」：ok=false 表示这次没读到（不可据此判空）
+  async function readSubs(url) {
     try {
       const data = await apiJson(url);
-      return data?.data?.subtitle?.subtitles || [];
+      return { ok: data?.code === 0, subs: data?.data?.subtitle?.subtitles || [] };
     } catch (e) {
-      return [];
+      return { ok: false, subs: [] };
     }
   }
 
-  // 字幕归属校验：B 站存在一个偶发 bug——对「确实没有字幕」的视频请求 player/wbi/v2，
-  // 它会返回一条指向「别的视频」的幽灵 AI 字幕（auth_key、文件名每次都不同，内容也每次都换），
+  // 取 AI 字幕 CDN 路径里的 prod 文件名（真字幕：稳定 hash；幽灵字幕：每次随机）。auth_key 每次都变，不能用全 URL。
+  function prodKey(s) {
+    const m = (s?.subtitle_url || "").match(/\/prod\/([^/?#]+)/);
+    return m ? m[1] : null;
+  }
+  function isAiSub(s) {
+    return /^ai/i.test(s?.lan || "") || /aisubtitle\.hdslb\.com/.test(s?.subtitle_url || "");
+  }
+
+  // 字幕稳定性校验：B 站存在一个偶发 bug——对「确实没有字幕」的视频请求 player/(wbi/)v2，
+  // 会返回一条指向「别的视频」的幽灵 AI 字幕（prod 文件名是随机 hash、每次请求都不同，内容也每次都换），
   // 直接下载就会把别人的整篇字幕当成本视频字幕喂给模型，表现为「整篇幻觉、刷新一次换一个视频」。
-  // 真 AI 字幕的 URL 形如 .../ai_subtitle/prod/{aid}{cid}{hash}，路径里必然以前缀方式内嵌本视频的 aid+cid；
-  // 幽灵字幕内嵌的是别的视频的 aid/cid。据此过滤：AI 字幕的 prod 文件名必须以当前 aid+cid 开头，否则丢弃。
-  // （只校验 AI 字幕；人工上传字幕走不同的 URL 格式，不在此列，避免误伤。）
-  function ownSubtitles(subs, aid, cid) {
-    const ownerKey = `${aid}${cid}`;
-    return (subs || []).filter((s) => {
-      const url = s?.subtitle_url || "";
-      const isAi = /^ai/i.test(s?.lan || "") || /aisubtitle\.hdslb\.com/.test(url);
-      if (!isAi) return true;
-      const match = url.match(/\/prod\/([^/?#]+)/);
-      return !!match && match[1].startsWith(ownerKey);
+  // 真字幕的 prod 文件名是稳定 hash（实测形如 ai_subtitle/prod/3b6a071e...，并不内嵌 aid/cid，故不能用前缀匹配）。
+  // 据此对同一接口连读两次：只保留两次 prod 一致的 AI 字幕，随机 hash 的幽灵自然对不上而被丢弃。
+  // 人工字幕不在此列（走不同 URL 格式、不会是幽灵），避免误伤。
+  async function fetchStableSubs(url) {
+    const a = await readSubs(url);
+    if (!a.ok || !a.subs.length) return a.subs;     // 失败或本就空：交给上层兜底，不在这里造数据
+    const b = await readSubs(url);
+    if (!b.ok) return a.subs;                        // 二次读取失败（风控等）：无法校验，信任首读，避免误杀真字幕
+    const aKeys = new Set(a.subs.map(prodKey).filter(Boolean));
+    const bKeys = new Set(b.subs.map(prodKey).filter(Boolean));
+    return a.subs.filter((s) => {
+      if (!isAiSub(s)) return true;                  // 人工字幕直接保留
+      const pk = prodKey(s);
+      return !!pk && aKeys.has(pk) && bKeys.has(pk); // AI 字幕须两次 prod 一致才算真
     });
   }
 
