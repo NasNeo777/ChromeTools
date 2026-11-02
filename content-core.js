@@ -36,6 +36,8 @@
   let chatBusy = false;
   let customTools = [], curCustomTool = null;
   let closeFunctionMenu = () => {};
+  let disposeFunctionMenu = () => {};
+  let repositionFunctionMenu = () => {};
 
   // 各模式的文案：面板标题 / 流式提示 / 末步（DeepSeek）标签。needsComments 表示该模式还需读取评论。
   const MODES = {
@@ -56,6 +58,7 @@
 
   function injectButton() {
     if (document.getElementById("ds-tool-bar")) return;
+    disposeFunctionMenu();
 
     const bar = document.createElement("div");
     bar.id = "ds-tool-bar";
@@ -66,36 +69,92 @@
     launcher.setAttribute("aria-expanded", "false");
     launcher.setAttribute("aria-controls", "ds-function-menu");
     const menu = document.createElement("div");
-    menu.id = "ds-function-menu"; menu.className = "ds-function-menu"; menu.hidden = true;
+    menu.id = "ds-function-menu"; menu.className = "ds-function-menu ds-menu-surface"; menu.hidden = true;
     menu.setAttribute("aria-label", "AI 工具箱功能");
     const caption = document.createElement("div"); caption.className = "ds-menu-caption";
     caption.textContent = adapter.sourceType === "page" ? "当前页面 · 正文阅读" : "当前视频 · 字幕学习";
     menu.append(caption);
     const actions = adapter.sourceType === "page" ? [["理解页面", "summary"], ["页面出题", "quiz"]] : [["视频笔记", "summary"], ["翻译原文", "translate"], ["批判性分析", "critique"], ["评论印证", "comments"], ["视频练习", "quiz"]];
     for (const [label, mode] of actions) menu.append(mkBtn(label, () => { setMenu(false); onAction(mode); }));
-    closeFunctionMenu = () => setMenu(false);
-    renderCustomMenu(menu);
-    function setMenu(open) {
-      menu.hidden = !open; launcher.setAttribute("aria-expanded", String(open));
-      if (open) menu.querySelector("button")?.focus();
+    let positionFrame = 0;
+    const events = new AbortController();
+    const supportsPopover = typeof menu.showPopover === "function";
+    if (supportsPopover) menu.setAttribute("popover", "manual");
+    bar.append(launcher);
+    let placed = false;
+    try { placed = !!(adapter.placeBar && adapter.placeBar(bar)); } catch (e) { placed = false; }
+    if (!placed) { bar.classList.add("ds-floating"); document.body.appendChild(bar); }
+    // The menu must escape the title/channel stacking contexts and overflow clipping.
+    document.body.appendChild(menu);
+    const contains = target => target instanceof Node && (bar.contains(target) || menu.contains(target));
+    function positionMenu() {
+      if (menu.hidden) return;
+      if (!launcher.isConnected || !menu.isConnected) { disposeFunctionMenu(); return; }
+      const anchor = launcher.getBoundingClientRect();
+      const margin = 12, gap = 9;
+      const width = document.documentElement.clientWidth, height = window.innerHeight;
+      if (anchor.bottom <= 0 || anchor.top >= height || anchor.right <= 0 || anchor.left >= width) { setMenu(false); return; }
+      const above = Math.max(0, anchor.top - margin - gap);
+      const below = Math.max(0, height - anchor.bottom - margin - gap);
+      const desiredHeight = Math.min(560, menu.scrollHeight);
+      const opensBelow = below >= desiredHeight || below >= above;
+      menu.style.maxHeight = Math.min(560, opensBelow ? below : above) + "px";
+      const menuWidth = menu.offsetWidth, menuHeight = menu.offsetHeight;
+      const aligned = bar.classList.contains("ds-floating") ? anchor.right - menuWidth : anchor.left;
+      menu.style.left = Math.max(margin, Math.min(aligned, width - margin - menuWidth)) + "px";
+      menu.style.top = (opensBelow ? anchor.bottom + gap : anchor.top - gap - menuHeight) + "px";
+      menu.dataset.side = opensBelow ? "bottom" : "top";
     }
-    bar.append(launcher, menu);
-    bar.addEventListener("keydown", ev => {
-      if (ev.key === "Escape") { setMenu(false); launcher.focus(); }
+    function schedulePosition() {
+      if (menu.hidden || positionFrame) return;
+      positionFrame = requestAnimationFrame(() => { positionFrame = 0; positionMenu(); });
+    }
+    function setMenu(open) {
+      if (open && (!launcher.isConnected || !menu.isConnected)) return;
+      if (open) {
+        menu.hidden = false;
+        if (supportsPopover && !menu.matches(":popover-open")) menu.showPopover();
+        positionMenu();
+        if (!menu.hidden) menu.querySelector("button")?.focus({ preventScroll: true });
+      } else {
+        if (supportsPopover && menu.matches(":popover-open")) menu.hidePopover();
+        menu.hidden = true;
+      }
+      launcher.setAttribute("aria-expanded", String(!menu.hidden));
+    }
+    function handleKeys(ev) {
+      if (ev.key === "Escape") { ev.preventDefault(); setMenu(false); launcher.focus({ preventScroll: true }); }
       if (ev.key === "ArrowDown" || ev.key === "ArrowUp") {
         ev.preventDefault();
         if (menu.hidden) return setMenu(true);
         const buttons = [...menu.querySelectorAll("button")], index = buttons.indexOf(document.activeElement);
-        buttons[(index + (ev.key === "ArrowDown" ? 1 : -1) + buttons.length) % buttons.length].focus();
+        buttons[(index + (ev.key === "ArrowDown" ? 1 : -1) + buttons.length) % buttons.length].focus({ preventScroll: true });
+        document.activeElement.scrollIntoView({ block: "nearest" });
       }
-    });
-    bar.addEventListener("focusout", ev => { if (!bar.contains(ev.relatedTarget)) setMenu(false); });
-    const dismiss = ev => { if (!bar.isConnected) document.removeEventListener("pointerdown", dismiss); else if (!bar.contains(ev.target)) setMenu(false); };
-    document.addEventListener("pointerdown", dismiss);
-
-    let placed = false;
-    try { placed = !!(adapter.placeBar && adapter.placeBar(bar)); } catch (e) { placed = false; }
-    if (!placed) { bar.classList.add("ds-floating"); document.body.appendChild(bar); }
+    }
+    const options = { signal: events.signal };
+    for (const surface of [bar, menu]) {
+      surface.addEventListener("keydown", handleKeys, options);
+      surface.addEventListener("focusout", ev => { if (!contains(ev.relatedTarget)) setMenu(false); }, options);
+    }
+    document.addEventListener("pointerdown", ev => { if (!bar.isConnected) disposeFunctionMenu(); else if (!contains(ev.target)) setMenu(false); }, options);
+    window.addEventListener("scroll", schedulePosition, { capture: true, passive: true, signal: events.signal });
+    window.addEventListener("resize", schedulePosition, options);
+    window.visualViewport?.addEventListener("resize", schedulePosition, options);
+    menu.addEventListener("toggle", ev => {
+      if (ev.newState === "closed" && !menu.hidden) { menu.hidden = true; launcher.setAttribute("aria-expanded", "false"); }
+    }, options);
+    const sizeObserver = new ResizeObserver(schedulePosition);
+    sizeObserver.observe(menu); sizeObserver.observe(launcher);
+    closeFunctionMenu = () => setMenu(false);
+    repositionFunctionMenu = schedulePosition;
+    disposeFunctionMenu = () => {
+      setMenu(false); events.abort(); sizeObserver.disconnect();
+      if (positionFrame) cancelAnimationFrame(positionFrame);
+      menu.remove();
+      closeFunctionMenu = () => {}; repositionFunctionMenu = () => {}; disposeFunctionMenu = () => {};
+    };
+    renderCustomMenu(menu);
   }
 
   function renderCustomMenu(menu = document.getElementById("ds-function-menu")) {
@@ -112,6 +171,7 @@
       button.dataset.customToolId = tool.id; group.append(button);
     }
     menu.append(group);
+    repositionFunctionMenu();
   }
   async function loadCustomTools() {
     if (!chrome.storage?.local) return;
@@ -130,6 +190,7 @@
     if (panel && document.body.contains(panel)) return panel;
     panel = document.createElement("div");
     panel.className = "ds-panel";
+    panel.id = "ds-result-panel";
     panel.innerHTML = `
       <div class="ds-panel-head">
         <div><span class="ds-panel-kicker">AI TOOLBOX / 阅读与学习</span><span class="ds-panel-title">视频笔记</span></div>
@@ -485,11 +546,12 @@
     scheduled = false;
     const next = adapters.find(a => a.name !== "page" && a.isVideoPage() && a.getVideoId()) || adapters.find(a => a.name === "page" && a.isVideoPage());
     if (next !== adapter) {
+      disposeFunctionMenu();
       adapter = next;
       document.getElementById("ds-tool-bar")?.remove();
       transcriptCache = null; commentsCache = null;
     }
-    if (adapter) injectButton();
+    if (adapter) { injectButton(); repositionFunctionMenu(); }
   }
   function register(a) {
     adapters.push(a);

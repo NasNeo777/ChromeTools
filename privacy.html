@@ -1,1 +1,210 @@
-<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AI工具箱 · 隐私政策</title><style>body{max-width:820px;margin:48px auto;padding:0 24px;font:15px/1.9 system-ui,sans-serif;background:#f5f7f6;color:#252d29}h1{font-size:28px}h2{margin-top:36px}h3{margin-top:28px}p{overflow-wrap:anywhere}a{color:#31765b}</style></head><body><h1>隐私权政策 · Privacy Policy</h1><p>**适用扩展：AI工具箱（原 DeepSeek 工具箱）**  <br>**更新日期：2026-11-02 · 版本 1.6.0**</p><h2>中文版</h2><p>AI工具箱提供视频和网页的总结、翻译、分析、练习与批改。本扩展不含广告、统计或跟踪代码，开发者不运营接收用户内容的中转服务器。</p><h3>读取与发送的数据</h3><p>仅在您主动点击功能或提交作答时，扩展读取相关内容：视频字幕；在评论印证模式下读取的热门评论；普通网页已经加载且可读取的正文；用于追问的对话；用于AI批改的题目、参考答案、评分要点与填空/问答作答。页面标题、网址等来源信息可能随相关请求发送。选择题本地判分，未作答题目本地记零。</p><p>网页提取会避开表单输入、可编辑区域、隐藏内容和导航等非正文区域，不读取密码输入值、跨域iframe、未加载的链接内容或视频画面。扩展不会因安装或浏览页面而自动发送正文。页面中本来公开显示的个人信息可能属于正文，请按需使用功能。</p><h3>服务商与自定义地址</h3><p>AI请求直接从浏览器后台发送到您选择并配置的服务商：DeepSeek、Kimi、MiMo、OpenAI、Claude，或您自行设置的OpenAI兼容API地址。当前请求只使用当前服务商的Key，不将其他服务商Key发送给它。使用自定义API地址时，您的Key与请求资料会发送至该地址。</p><p>数据处理与保留受所选服务商自己的政策约束，请在其官方网站查阅：[DeepSeek](https://www.deepseek.com/)、[Kimi](https://www.kimi.com/)、[MiMo](https://platform.xiaomimimo.com/)、[OpenAI](https://openai.com/policies/privacy-policy/)、[Anthropic](https://www.anthropic.com/legal/privacy)。开发者不代替服务商承诺其保留期限。</p><h3>本地配置与保留</h3><p>各家API Key、模型ID、API地址、所选服务商、总结风格与输出语言保存在 `chrome.storage.sync`。若浏览器启用同步，Google可能在您的设备之间同步这些配置。旧版DeepSeek配置继续保留兼容。视频/页面资料、试卷与作答只保存在当前页面内存，刷新或离开后清除；主动导出的文件保存到浏览器下载位置，由用户管理。卸载扩展会删除扩展配置，不会删除已导出的文件。</p><h3>权限与安全</h3><p>为在普通网页显示入口和读取正文，扩展在HTTP/HTTPS页面运行；浏览器内部或其他受限页面不支持。远程AI请求使用HTTPS，API Key只发送到所配置的目标地址，且不随跨域重定向转发。我们不出售数据，不建立广告画像，不读取浏览历史。请勿在不可信的共享设备上保存私人Key。</p><h3>变更与联系</h3><p>后续功能变化会相应更新本政策。如需反馈，请使用本项目的公开反馈渠道。历史1.5版本政策保存在项目的 `docs/legacy/PRIVACY-1.5.md`。</p><h2>English</h2><p>AI Toolbox (formerly DeepSeek Toolbox) summarizes and analyzes videos and web pages and provides quizzes, grading, follow-up chat and exports. It contains no advertising or analytics code and uses no developer-operated relay server.</p><p>Content is read and transmitted only when you trigger a feature or submit answers. Depending on the feature, requests may include video transcripts, popular comments, rendered page text, source metadata, chat history, questions, reference answers, rubrics and subjective student answers. Multiple-choice and blank-submission scores are computed locally. Form inputs, editable areas and hidden page content are excluded from page extraction. The extension does not read browser history, unloaded links, cross-origin frames or video pixels.</p><p>Requests go directly to your selected provider (DeepSeek, Kimi, MiMo, OpenAI, Claude) or your configured compatible API endpoint. Only that provider&#x27;s key is used. Custom endpoints receive the credentials and content you submit to them. Provider data handling is governed by that provider&#x27;s own policy.</p><p>Keys and preferences are stored in `chrome.storage.sync` and may be synchronized across your devices by the browser. Existing DeepSeek settings remain compatible. Source text, quizzes and answers remain in page memory until reload or navigation; exported files remain in your downloads until you delete them. Uninstalling removes extension settings but not exported files.</p><p>HTTP/HTTPS site access enables the launcher and requested text extraction on ordinary pages. AI requests use HTTPS and do not follow redirects. The developer does not sell data or use it for profiling. This policy was updated on 2026-11-02 for version 1.6.0.<br></p></body></html>
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="AI工具箱 1.7.0 隐私政策：网页与视频内容、AI接口、API Key、存储、同步和删除说明。">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'">
+  <title>AI工具箱 · Privacy Policy</title>
+  <style>
+    :root{color-scheme:light dark;font:15px/1.9 system-ui,-apple-system,"PingFang SC",sans-serif;--bg:#f5f7f6;--paper:#fff;--ink:#25352b;--muted:#64736a;--line:#dfe7e1;--accent:#31765b;--wash:#eef4f0}
+    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink)}main{max-width:960px;margin:40px auto 64px;padding:40px 48px;background:var(--paper);border:1px solid var(--line);border-radius:24px;overflow-wrap:anywhere}.brand{font-size:10px;letter-spacing:.14em;font-weight:650;color:var(--accent)}h1{font-size:clamp(24px,4vw,34px);line-height:1.3;letter-spacing:-.035em;margin:14px 0 24px}h2{font-size:24px;line-height:1.4;letter-spacing:-.025em;margin:44px 0 20px;padding-top:20px;border-top:1px solid var(--line);scroll-margin-top:20px}h3{font-size:17px;line-height:1.5;margin:32px 0 12px}p{margin:12px 0}a{color:var(--accent);text-underline-offset:3px}a:focus-visible,.table-wrap:focus-visible{outline:2px solid var(--accent);outline-offset:4px}ul{padding-left:24px}li{margin:5px 0}code{font:12px/1.7 ui-monospace,monospace;background:var(--wash);padding:2px 5px;border-radius:4px}.table-wrap{overflow-x:auto;margin:20px 0;border:1px solid var(--line);border-radius:12px}table{border-collapse:collapse;width:100%;min-width:560px;font-size:13px;line-height:1.8}th,td{padding:13px 15px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}th{font-weight:650;background:var(--wash)}tr:last-child td{border-bottom:0}td:first-child{min-width:130px}.footer{font-size:12px;color:var(--muted);margin-top:36px;padding-top:20px;border-top:1px solid var(--line)}
+    @media(max-width:640px){main{margin:12px;padding:26px 18px;border-radius:16px}h1{font-size:25px}h2{font-size:21px}body{font-size:14px}.table-wrap{margin:16px 0}}
+    @media(prefers-color-scheme:dark){:root{--bg:#18211b;--paper:#202b23;--ink:#e2eae4;--muted:#a6b5ab;--line:#3a4a3e;--accent:#9ac8ac;--wash:#29382e}}
+    @media print{:root{color-scheme:light;--bg:#fff;--paper:#fff;--ink:#25352b;--line:#ccc;--accent:#25352b;--wash:#f3f3f3}body{font-size:11px}main{margin:0;padding:0;max-width:none;border:0;border-radius:0}h2,h3{break-after:avoid}.table-wrap{overflow:visible}table{min-width:0;font-size:10px}th,td{padding:7px}a{color:inherit}.footer{display:none}}
+  </style>
+</head>
+<body>
+  <!-- Rendered from PRIVACY.md. This page uses no remote assets or executable scripts. -->
+  <main>
+    <div class="brand">AI TOOLBOX / PRIVACY</div>
+<h1>隐私政策 · Privacy Policy</h1>
+<p><strong>扩展名称：AI工具箱（原 DeepSeek 工具箱）</strong></p>
+<p><strong>适用版本：1.7.0 · 更新日期：2026-11-02</strong></p>
+<p><a href="#%E4%B8%AD%E6%96%87%E7%89%88">中文版</a> · <a href="#english">English</a></p>
+<h2 id="中文版" lang="zh-CN">中文版</h2>
+<h3>1. 适用范围与基本说明</h3>
+<p>本政策说明 AI工具箱浏览器扩展如何读取、使用、传输和保存数据。扩展用于理解和学习当前网页或视频内容，提供总结、翻译、分析、追问、练习出题与批改，以及基于自定义提示词的内容生成。</p>
+<p>AI 请求由您的浏览器直接发送到您选择并配置的接口，不经过开发者运营的内容中转服务器。本扩展不内置广告、使用情况统计或行为追踪代码，也不要求注册开发者提供的独立账号。</p>
+<p>安装或加载扩展后，内容脚本会识别当前页面类型并展示功能入口，设置面板也会读取当前活动标签页的网址以显示工具可用性。扩展不会仅因访问页面而自动提取正文或将内容发送至 AI 服务商；正文、字幕、评论的读取及 AI 请求由您主动运行相应功能触发。</p>
+<h3>2. 处理哪些数据、用于什么功能</h3>
+<div class="table-wrap" role="region" aria-label="数据处理说明表" tabindex="0"><table>
+<thead>
+<tr>
+<th>数据类别</th>
+<th>内容和用途</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>API 配置与使用偏好</td>
+<td>您填写的各服务商 API Key、模型 ID、API Base URL、所选服务商、总结风格和输出语言，用于记住配置与调用对应服务</td>
+</tr>
+<tr>
+<td>网页内容与来源信息</td>
+<td>当前页面可提取的正文，以及按功能需要附带的标题、网址、站点或作者信息，用于网页理解、出题、自定义生成和追问</td>
+</tr>
+<tr>
+<td>视频相关内容</td>
+<td>YouTube 或哔哩哔哩的视频信息与字幕；在评论印证模式下额外读取的热门评论，用于笔记、翻译、分析与学习</td>
+</tr>
+<tr>
+<td>自定义工具</td>
+<td>您设置的按钮名称、提示词、适用范围和启用状态，用于展示工具按钮并执行对应文本任务</td>
+</tr>
+<tr>
+<td>练习、作答与对话</td>
+<td>题目、参考答案、评分要点、原文依据、您的作答、追问及部分历史结果，用于生成练习、批改与继续对话</td>
+</tr>
+<tr>
+<td>复制和导出内容</td>
+<td>您主动复制的生成结果，或主动下载的结果文档、试卷和答案，用于在本机继续使用</td>
+</tr>
+</tbody></table></div>
+<p>选择题按参考答案在浏览器中判分，未作答题目本地记零。需要 AI 评估的填空和问答会将对应题目、参考答案、评分要点、作答及来源文字发送至所选服务商。如果全部题目均可本地判分，该次批改不会发起 AI 请求。</p>
+<p>普通网页的提取会过滤表单控件、表单区域、可编辑区域、隐藏元素，以及部分导航等非正文区域；不读取跨域 iframe、视频画面或未加载的链接内容。正文过长时会截断并标注范围。过滤并不意味着可读正文不含个人信息：页面上展示的姓名、联系信息、私人通信、业务资料或敏感网址仍可能属于被提取的内容。请在运行功能前确认您有权处理并发送这些资料。</p>
+<p>本扩展不使用浏览历史 API 建立访问记录，不通过扩展功能读取密码输入值，也不将数据用于广告画像、出售或与当前功能无关的用途。</p>
+<h3>3. 请求发送给谁</h3>
+<p>当前支持 DeepSeek、Kimi、MiMo、OpenAI、Claude，以及用户自行配置的 OpenAI Chat Completions 兼容接口。只有当前选定配置的 API Key 会作为认证信息发送给该配置的目标地址，其他服务商的 Key 不会随请求一并发送。</p>
+<p>下列链接是服务商的公开入口，具体的数据处理、保留、账号权限、服务区域和费用以其当时公布的条款与控制台说明为准：</p>
+<ul>
+<li><a href="https://platform.deepseek.com/">DeepSeek</a></li>
+<li><a href="https://platform.kimi.com/">Kimi</a></li>
+<li><a href="https://platform.xiaomimimo.com/">MiMo</a></li>
+<li><a href="https://platform.openai.com/">OpenAI</a></li>
+<li><a href="https://platform.claude.com/">Claude / Anthropic</a></li>
+</ul>
+<p>您可以修改任何服务商的 API Base URL。修改后，对应 Key 和请求资料会发送到您填写的地址；内置服务商名称并不保证修改后的地址仍属于该服务商。请仅填写您信任的 HTTPS 接口。接收方还可能获得建立网络连接所需的技术信息，如请求来源 IP；其处理由接收方负责。</p>
+<p>读取视频字幕和评论时，扩展会向对应视频平台及资源域名发起请求。部分请求使用浏览器已有的平台登录态；扩展没有单独导出平台 Cookie，也不会将这些登录凭证作为 AI 请求参数发送。AI 接口请求不携带浏览器 Cookie。</p>
+<p>开发者无法通过本扩展管理已发送到第三方服务的数据，也不代替第三方承诺其保留期限、是否用于训练或能否删除。您需要依据自己的账号类型、地区及服务设置确认这些事项。</p>
+<h3>4. 数据保存在哪里、保存多久</h3>
+<div class="table-wrap" role="region" aria-label="数据处理说明表" tabindex="0"><table>
+<thead>
+<tr>
+<th>存放位置</th>
+<th>保存的数据</th>
+<th>保留方式</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>chrome.storage.sync</code></td>
+<td>各家 API Key、模型与接口地址、所选服务商、总结风格、语言，以及旧 DeepSeek 配置的兼容字段</td>
+<td>跨浏览器重启保留；启用 Chrome 同步时可能同步到同一账号的其他设备</td>
+</tr>
+<tr>
+<td><code>chrome.storage.local</code></td>
+<td>自定义工具的名称、提示词、适用范围和启用状态</td>
+<td>保存在当前浏览器配置中，不由本扩展自动跨设备同步</td>
+</tr>
+<tr>
+<td>当前页面内存</td>
+<td>已读取的正文、字幕、评论缓存，生成结果、对话、试卷和作答</td>
+<td>不自动写入持久化学习记录；通常随完整刷新或关闭页面释放，站内不重新加载的导航可能暂留上一次结果</td>
+</tr>
+<tr>
+<td>系统剪贴板与下载文件</td>
+<td>您主动复制或导出的内容</td>
+<td>由操作系统、浏览器及您自行管理，不会因关闭或卸载扩展而自动删除</td>
+</tr>
+</tbody></table></div>
+<p>API Key 使用浏览器扩展存储保存，本扩展未对其实施额外的应用层加密，也不提供密码管理器级别的保护。请妥善管理浏览器账号和设备访问权限。Chrome 同步由浏览器提供，受浏览器设置与 Google 的相关规则影响；同步关闭或离线不代表设备上没有本地配置。</p>
+<p>编辑、停用或删除自定义工具会更新菜单，但已生成的对话可在页面内存中继续保留当时使用的提示词上下文，直到页面生命周期结束。</p>
+<h3>5. 您如何管理和删除数据</h3>
+<p>您可以在扩展设置中更换所选服务商、修改并保存 Key、模型和接口地址，也可以编辑、停用或删除自定义工具。停用工具只隐藏其入口，不删除保存的提示词；删除工具不会自动删除既有导出文件、已生成的页面对话或已经发送到服务商的数据。</p>
+<p>如需清除当前页面中的结果和作答，可完整刷新或关闭该页面。请先导出需要保留的内容。卸载扩展会清除该浏览器配置中的扩展存储；同步副本的处理还取决于浏览器同步状态，必要时请在其他设备与浏览器同步设置中核对。</p>
+<p>卸载扩展、删除配置或关闭页面都不会撤销服务商颁发的 API Key。如需阻止该 Key 继续使用，请在对应服务商的控制台撤销或轮换。已发送数据的查询或删除请求应向接收它的服务商提出；本地下载文件和剪贴板内容需自行清理。</p>
+<h3>6. 权限与安全措施</h3>
+<p>当前版本声明 <code>storage</code>、<code>activeTab</code>，以及 HTTP/HTTPS 主机访问范围。<code>storage</code> 用于配置和自定义工具；活动页信息用于在设置面板提示工具可用性；网站访问用于展示入口、按需提取正文、访问视频平台接口，以及请求您配置的 AI 服务。</p>
+<p>AI 接口地址必须使用 HTTPS，AI 请求不跟随重定向。所有执行的扩展脚本均随安装包提供；自定义提示词属于文本配置，不是可执行插件。模型输出按允许的文档标签和属性展示，不执行其中的脚本或加载其中的远程资源。这些措施不能保证设备、浏览器或所配置的第三方服务绝对安全。</p>
+<p>普通 HTTP 网页本身的传输安全由该网站决定，扩展使用 HTTPS 请求 AI 并不使原网页变为安全站点。</p>
+<h3>7. 反馈、变更与联系</h3>
+<p>功能反馈可通过 <a href="https://github.com/NasNeo777/ChromeTools/issues">GitHub Issues</a> 提交。隐私问题可联系 <a href="mailto:bigbugbbb@gmail.com">bigbugbbb@gmail.com</a>。如果您主动发送邮件或提交 Issue，开发者会收到您自行提供的内容；公开 Issue 对其他人可见，请勿在其中提交完整 API Key、私人正文或其他敏感资料。</p>
+<p>本政策会随功能和数据处理方式变化更新，并标明更新日期。历史版本仅用于记录，当前政策适用于本文注明的扩展版本。</p>
+<section lang="en"><h2 id="english" lang="en">English</h2>
+<h3>1. Scope and overview</h3>
+<p>This policy describes how the AI Toolbox browser extension, formerly DeepSeek Toolbox, reads, uses, transmits and stores data. It helps users understand and learn from the current page or video through summaries, translation, analysis, follow-up chat, quizzes, grading and custom prompt tools.</p>
+<p>AI requests go directly from your browser to the endpoint you select and configure, without a developer-operated content relay. The extension contains no advertising, usage analytics or behavioral tracking code and requires no separate developer-operated account.</p>
+<p>When loaded, content scripts identify the page type and display a launcher. The settings popup also checks the active tab URL to indicate available tools. Visiting a page alone does not trigger extraction of its body or transmission to an AI provider. Reading page text, video transcripts or comments, and making AI requests, are triggered by your use of the corresponding features.</p>
+<h3>2. Data processed and its purposes</h3>
+<div class="table-wrap" role="region" aria-label="数据处理说明表" tabindex="0"><table>
+<thead>
+<tr>
+<th>Data</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Provider settings and preferences</td>
+<td>API keys, model IDs, base URLs, selected provider, summary style and language are used to remember settings and authenticate API calls</td>
+</tr>
+<tr>
+<td>Page text and source metadata</td>
+<td>Extracted text and, where applicable, titles, URLs, site or author information support page understanding, quizzes, custom generation and chat</td>
+</tr>
+<tr>
+<td>Video content</td>
+<td>Video information and transcripts support video tools; popular comments are additionally retrieved for comment analysis</td>
+</tr>
+<tr>
+<td>Custom tools</td>
+<td>Tool names, prompts, scopes and enabled states define menu buttons and text-generation tasks</td>
+</tr>
+<tr>
+<td>Exercises and conversations</td>
+<td>Questions, reference answers, rubrics, source evidence, submitted answers, follow-up questions and selected prior results support quizzes, grading and chat</td>
+</tr>
+<tr>
+<td>Copied or exported results</td>
+<td>Content you choose to copy or download supports further use outside the extension</td>
+</tr>
+</tbody></table></div>
+<p>Multiple-choice answers and unanswered questions are scored locally. When AI grading is needed, the relevant short-answer or fill-in questions, reference answers, rubrics, submitted answers and source text are sent to the selected provider. A grading submission handled entirely by local scoring makes no AI request.</p>
+<p>Page extraction filters out form controls, form areas, editable regions, hidden elements and some navigation content. It does not read cross-origin frames, video pixels or unloaded links. Long source text can be truncated with a notice. Filtering does not guarantee that extracted text contains no personal information: visible names, contact details, private communications, business information or sensitive URLs may be included. Confirm that you are entitled to process and transmit the material before running a feature.</p>
+<p>The extension does not use the browsing history API to build a visit log, read password input values through its features, or use data for advertising profiles, sale or purposes unrelated to the requested features.</p>
+<h3>3. Recipients and third-party services</h3>
+<p>Supported providers are <a href="https://platform.deepseek.com/">DeepSeek</a>, <a href="https://platform.kimi.com/">Kimi</a>, <a href="https://platform.xiaomimimo.com/">MiMo</a>, <a href="https://platform.openai.com/">OpenAI</a> and <a href="https://platform.claude.com/">Claude / Anthropic</a>, together with user-configured OpenAI Chat Completions-compatible endpoints. Only the key belonging to the currently selected configuration is sent as authentication to its configured destination; keys from other configurations are not included.</p>
+<p>You can change the base URL of any provider profile. The corresponding key and request data will then be sent to that address. A built-in provider label does not establish ownership of a modified endpoint. Use only HTTPS endpoints you trust. Recipients may also receive technical information needed for the connection, such as the requesting IP address.</p>
+<p>Video features make requests to the relevant platform and resource hosts. Some requests use your existing browser login session on that platform. The extension does not separately export platform cookies or include those login credentials in AI request parameters. AI requests omit browser cookies.</p>
+<p>Third-party processing, retention, account access, service region and charges depend on that provider&#39;s current terms and your account settings. The developer cannot manage data after it reaches a third party and makes no promise on that party&#39;s behalf about retention, training use or deletion.</p>
+<h3>4. Storage and retention</h3>
+<div class="table-wrap" role="region" aria-label="数据处理说明表" tabindex="0"><table>
+<thead>
+<tr>
+<th>Location</th>
+<th>Data and retention</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>chrome.storage.sync</code></td>
+<td>Provider keys, models, endpoints, selected provider, preferences and legacy DeepSeek compatibility fields persist across restarts and may sync to other devices on the same Chrome account</td>
+</tr>
+<tr>
+<td><code>chrome.storage.local</code></td>
+<td>Custom tool names, prompts, scopes and enabled states persist in the current browser profile without automatic cross-device synchronization by this extension</td>
+</tr>
+<tr>
+<td>Page memory</td>
+<td>Extracted content, caches, results, chats, quizzes and answers are not automatically stored as persistent learning records; they generally remain until a full reload or tab closure, and may persist during navigation that does not reload the document</td>
+</tr>
+<tr>
+<td>Clipboard and downloads</td>
+<td>Copied content and exported files are controlled by your operating system, browser and your own actions, and are not automatically deleted when the extension is closed or uninstalled</td>
+</tr>
+</tbody></table></div>
+<p>Keys are stored using browser extension storage. The extension adds no application-level encryption and does not provide password-manager-level protection. Protect access to your browser account and devices. Chrome synchronization is governed by browser settings and Google&#39;s applicable rules; disabled sync or an offline browser does not mean there are no local settings.</p>
+<p>Editing, disabling or deleting a custom tool updates its menu entry. An existing conversation can retain the original prompt snapshot in page memory for the rest of the page lifecycle.</p>
+<h3>5. Your controls and deletion</h3>
+<p>You can change the selected provider, replace and save credentials or endpoints, and edit, disable or delete custom tools. Disabling a tool hides its entry without deleting the saved prompt. Deleting it does not erase prior exports, existing page conversations or data already sent to a provider.</p>
+<p>A full reload or tab closure clears the current page state; export anything you wish to retain first. Uninstalling removes extension storage from that browser profile. Handling of synchronized copies also depends on browser sync state, so check other devices and synchronization settings as needed.</p>
+<p>Uninstalling, deleting settings or closing a tab does not revoke a provider-issued API key. Revoke or rotate it in the provider&#39;s console when necessary. Requests about data already transmitted must be directed to its recipient. Clear local downloads and clipboard content yourself.</p>
+<h3>6. Permissions and security measures</h3>
+<p>Version 1.7.0 declares <code>storage</code>, <code>activeTab</code> and HTTP/HTTPS host access. Storage supports settings and custom tools; active-page information supports tool availability indicators; website access supports the launcher, requested text extraction, video platform requests and calls to configured AI services.</p>
+<p>AI endpoints must use HTTPS and AI requests do not follow redirects. Executable extension scripts are packaged with the extension. Custom prompts are text settings, not executable plugins. Generated documents are rendered through an allowed set of tags and attributes without executing embedded scripts or loading embedded remote resources. These measures do not guarantee absolute security of your device, browser or third-party endpoint.</p>
+<p>An ordinary HTTP page&#39;s transport security depends on that website. Sending AI requests over HTTPS does not secure the original page connection.</p>
+<h3>7. Contact and changes</h3>
+<p>For feature feedback, use <a href="https://github.com/NasNeo777/ChromeTools/issues">GitHub Issues</a>. For privacy questions, email <a href="mailto:bigbugbbb@gmail.com">bigbugbbb@gmail.com</a>. If you voluntarily email or submit an issue, the developer receives the content you choose to include. Public issues are visible to others; never include full API keys, private page text or sensitive information.</p>
+<p>This policy will be updated when features or data handling change, with the revision date shown above. Historical versions are retained for reference; this policy describes the extension version identified in this document.</p>
+</section>
+    <div class="footer">AI工具箱 · 1.7.0 · 2026-11-02</div>
+  </main>
+</body>
+</html>
