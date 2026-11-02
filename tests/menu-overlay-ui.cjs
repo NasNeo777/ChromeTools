@@ -8,7 +8,9 @@ const fs = require('node:fs');
     for (const native of [true, false]) {
       const page = await browser.newPage({ viewport: { width: 1200, height: 900 } });
       const errors = []; page.on('pageerror', error => errors.push(error.message));
-      await page.setContent(`<!doctype html><html><head><meta charset="utf-8"><style>body{margin:0;min-height:1900px;background:#f4f6f4;font:16px/1.8 system-ui;color:#26372c}.metadata{position:relative;top:220px;margin-left:24px;width:850px;height:110px;overflow:hidden;transform:translateZ(0);z-index:0}.cover{position:fixed;left:0;top:330px;width:1150px;height:440px;background:#edf0ee;z-index:9999;padding:24px;box-sizing:border-box}h1{font-size:24px;margin:0}#outside{position:fixed;right:20px;top:20px}</style></head><body><section class="metadata"><div id="above-the-fold"><div id="title"><h1>视频内容与学习 · 菜单层级验证</h1></div></div></section><div class="cover">频道信息、操作栏与视频简介区域</div><button id="outside">页面其他操作</button></body></html>`);
+      const fixture = `<!doctype html><html><head><meta charset="utf-8"><style>body{margin:0;min-height:1900px;background:#f4f6f4;font:16px/1.8 system-ui;color:#26372c}.metadata{position:relative;top:220px;margin-left:24px;width:850px;height:110px;overflow:hidden;transform:translateZ(0);z-index:0}.cover{position:fixed;left:0;top:330px;width:1150px;height:440px;background:#edf0ee;z-index:9999;padding:24px;box-sizing:border-box}h1{font-size:24px;margin:0}#outside{position:fixed;right:20px;top:20px}</style></head><body><section class="metadata"><div id="above-the-fold"><div id="title"><h1>视频内容与学习 · 菜单层级验证</h1></div></div></section><div class="cover">频道信息、操作栏与视频简介区域</div><button id="outside">页面其他操作</button></body></html>`;
+      await page.route("https://www.youtube.com/**", route => route.fulfill({ contentType: "text/html", body: fixture }));
+      await page.goto("https://www.youtube.com/watch?v=fixture");
       await page.evaluate(useNative => {
         if (!useNative) Object.defineProperty(HTMLElement.prototype, 'showPopover', { value: undefined, configurable: true });
         window.changeHandlers = [];
@@ -16,8 +18,7 @@ const fs = require('node:fs');
       }, native);
       await page.addStyleTag({ path: path.resolve('content.css') });
       for (const file of ['custom-tools.js', 'quiz-shared.js', 'quiz-content.js', 'content-core.js', 'content-youtube.js']) await page.addScriptTag({ path: path.resolve(file) });
-      // The real YouTube placement adapter is used; the fixture only supplies its URL.
-      await page.evaluate(() => DSSummarizer.register({ name: 'fixture', isVideoPage: () => true, getVideoId: () => 'video', placeBar: bar => { document.querySelector('#above-the-fold').append(bar); return true; }, steps: () => [] }));
+      // Use the real YouTube placement adapter against this controlled page fixture.
       const launcher = page.getByRole('button', { name: 'AI 工具箱', exact: true });
       await launcher.click();
       const menu = page.locator('#ds-function-menu');

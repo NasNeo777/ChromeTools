@@ -1,7 +1,7 @@
 /* On ordinary pages, extract rendered article text only when the user asks. */
 (function () {
   'use strict';
-  const OMIT = 'script,style,noscript,template,svg,canvas,iframe,video,audio,nav,aside,footer,form,input,textarea,select,button,[contenteditable],[hidden],[aria-hidden="true"],[role="navigation"],[role="banner"],#ds-tool-bar,.ds-panel';
+  const OMIT = 'script,style,noscript,template,svg,canvas,iframe,video,audio,nav,aside,footer,form,input,textarea,select,button,[contenteditable],[hidden],[aria-hidden="true"],[role="navigation"],[role="banner"],#ds-tool-bar,.ds-function-menu,.ds-panel';
   function extract(node, limit = 240000) {
     const walker = document.createTreeWalker(node, NodeFilter.SHOW_TEXT);
     const visible = new WeakMap();

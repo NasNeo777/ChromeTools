@@ -31,7 +31,7 @@ const path=require('node:path');const fs=require('node:fs');
   await page.getByText('为这篇内容，出一份试卷。',{exact:true}).waitFor();await page.selectOption('#ds-quiz-count','3');await page.click('#ds-quiz-generate');await page.waitForSelector('.ds-question');
   request=await page.evaluate(()=>requests.at(-1));assert.equal(request.type,'QUIZ_GENERATE');assert.equal(request.meta.sourceType,'page');assert.equal(await page.locator('.ds-question').count(),3);
   await page.locator('#ds-close').click();await page.evaluate(()=>document.querySelectorAll('nav,form,footer').forEach(el=>el.style.visibility='hidden'));await launcher.click();await page.screenshot({path:'screenshots/toolbox/page-menu.png',animations:'disabled'});
-  await page.setViewportSize({width:390,height:844});assert.equal(await page.locator('#ds-function-menu').evaluate(el=>{const r=el.getBoundingClientRect();return r.left>=0&&r.right<=innerWidth;}),true);
+  await page.setViewportSize({width:390,height:844});await page.waitForFunction(()=>{const r=document.querySelector('#ds-function-menu').getBoundingClientRect();return r.left>=0&&r.right<=innerWidth;});assert.equal(await page.locator('#ds-function-menu').evaluate(el=>{const r=el.getBoundingClientRect();return r.left>=0&&r.right<=innerWidth;}),true);
   assert.deepEqual(errors,[]);console.log('Webpage UI passed: one-button menu, keyboard dismissal, text extraction, private/hidden text exclusion, fresh content, summary and quiz.');
   // Test platform recognition after loading all adapters, including non-video routes and SPA changes.
   for(const [url,count] of [['https://www.youtube.com/watch?v=abc',5],['https://www.bilibili.com/video/BVabc',5],['https://www.youtube.com/',2]]){
