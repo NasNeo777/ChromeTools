@@ -3,38 +3,66 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>DeepSeek 工具箱</title>
+  <title>AI工具箱</title>
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
   <div class="hero">
-    <div class="eyebrow">DEEPSEEK / LEARNING TOOLS</div><h1>视频学习工具箱</h1>
-    <p>看懂视频，再用练习检验理解。</p>
+    <div class="eyebrow">AI TOOLBOX / READ · THINK · PRACTICE</div><div class="brand"><img src="icons/icon128.png" width="42" height="42" alt=""><h1>AI工具箱</h1></div>
+    <p>读懂网页与视频，把理解变成自己的知识。</p>
   </div>
 
   <div class="section">
     <!-- 共享配置 -->
     <div class="card">
       <div class="global-title">连接你的 AI</div>
-      <label for="apiKey">DeepSeek API Key</label>
-      <input type="password" id="apiKey" placeholder="sk-..." />
-      <div class="hint">
-        在 <a href="https://platform.deepseek.com/api_keys" target="_blank" rel="noopener noreferrer">platform.deepseek.com</a> 获取，仅保存在本地浏览器。
-      </div>
-      <label for="model">模型</label>
-      <select id="model">
-        <option value="deepseek-chat">deepseek-chat（推荐，快）</option>
-        <option value="deepseek-reasoner">deepseek-reasoner（更强，慢）</option>
-      </select>
+      <label for="provider">AI 服务商</label>
+      <select id="provider"></select>
+      <label for="apiKey" id="apiKey-label">API Key</label>
+      <input type="password" id="apiKey" placeholder="填写 API Key" autocomplete="off" />
+      <div class="hint"><a id="provider-docs" target="_blank" rel="noopener noreferrer">获取 API Key / 查看文档</a><br>每家配置分别保存。仅在你点击功能后发送内容。</div>
+      <label for="model">模型 ID</label>
+      <input type="text" id="model" list="model-suggestions" placeholder="填写账号可用的模型 ID" autocomplete="off" />
+      <datalist id="model-suggestions"></datalist>
+      <div class="hint" id="model-hint">可选建议模型，也可输入服务商提供的其他模型 ID。</div>
+      <details class="api-advanced"><summary>API 地址</summary>
+        <label for="baseUrl">API Base URL</label>
+        <input type="url" id="baseUrl" placeholder="https://api.example.com/v1" spellcheck="false" />
+        <div class="hint" id="endpoint-hint">使用服务商官方地址。</div>
+      </details>
     </div>
+
 
     <!-- 工具卡片（由 popup.js 动态渲染） -->
     <div id="tool-list"></div>
+
+    <section class="card custom-module" aria-labelledby="custom-module-title">
+      <div class="custom-module-head"><div><div class="eyebrow">YOUR TOOLS</div><h2 id="custom-module-title">自定义工具</h2></div><span id="custom-count" class="custom-scope-label">0 / 20</span></div>
+      <p class="card-desc">保存提示词，在功能菜单生成自己的按钮。</p>
+      <div id="custom-tool-list"></div>
+      <button type="button" class="custom-add" id="custom-add">添加工具</button>
+      <form id="custom-editor" hidden novalidate>
+        <h3 id="custom-editor-title">新建工具</h3>
+        <label for="custom-name">按钮名称</label>
+        <input type="text" id="custom-name" maxlength="24" placeholder="例如：提炼行动清单" />
+        <label for="custom-prompt">提示词</label>
+        <textarea id="custom-prompt" rows="7" maxlength="12000" placeholder="理解当前内容，提炼可执行的行动清单。每一项说明具体动作、前提条件与预期结果。"></textarea>
+        <div class="hint">自动附带当前页面正文或视频字幕，无需手动粘贴。最多 12,000 字符。</div>
+        <label for="custom-scope">显示范围</label>
+        <select id="custom-scope"><option value="all">所有页面</option><option value="page">普通网页</option><option value="video">视频页</option></select>
+        <div class="custom-form-actions"><button type="submit" id="custom-save">保存工具</button><button type="button" id="custom-cancel">取消</button></div>
+      </form>
+      <p id="custom-status" class="custom-status" role="status" aria-live="polite"></p>
+      <div class="hint">独立保存在本机，最多 20 个工具；使用当前选中的 AI 服务商。</div>
+    </section>
 
     <button class="save" id="save">保存设置</button>
     <div class="status" id="status" role="status" aria-live="polite"></div>
   </div>
 
+  <script src="custom-tools.js"></script>
+  <script src="custom-tools-editor.js"></script>
+  <script src="providers.js"></script>
   <script src="tools.js"></script>
   <script src="popup.js"></script>
 </body>

@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🧰 DeepSeek 工具箱
+# 🧰 AI工具箱
 
 ### 在 YouTube / 哔哩哔哩 视频页，一键调用 AI —— 看懂它，更**看透**它
 
@@ -17,9 +17,33 @@
 
 </div>
 
+## 网页理解、多家 API 与新入口（1.6.0）
+
+网页上的入口收拢为一个 **「AI 工具箱」** 按钮，点击展开功能菜单；点击外部或按 Escape 关闭，也可用上下方向键选择功能。
+
+- **YouTube / 哔哩哔哩视频页**：原有的视频笔记、全文翻译、批判性分析、评论印证、练习与追问全部保留。
+- **普通网页**：自动切换为「理解页面」「页面出题」。按需读取可见正文，生成摘要、内容脉络或试卷，继续使用原有批改、解析和导出能力。每次操作重新提取正文，避免复用已过期的网页内容。
+- **服务商**：保留 DeepSeek，新增 Kimi、MiMo、OpenAI、Claude 和其他 OpenAI 兼容 API。每家分别保存 Key、模型 ID 和 API Base URL；旧版 DeepSeek Key、模型、总结风格和输出语言可继续读取，切换服务商不会覆盖它们。
+- **DeepSeek 模型更新**：默认使用 `deepseek-flash`（快速模式），另提供 `deepseek-v4-pro`（思考模式）。旧 `deepseek-chat` / `deepseek-reasoner` 自动兼容为这两个新 ID，并在配置中保留 `legacyModel`；Key 和其他偏好保留。模型与参数参照 [DeepSeek 官方 Chat Completions 文档](https://api-docs.deepseek.com/api/create-chat-completion/)。
+- **模型**：可使用建议值，也可手动输入账号可用的模型 ID。Claude 使用 Messages 协议，其余使用 Chat Completions 兼容协议。自定义地址使用 HTTPS。
+- **品牌**：名称改为「AI工具箱」，采用新生成的书页与工具箱结合的 logo。原始旧图标保存在 `icons/legacy-deepseek/`。
+
+重新加载扩展后，请刷新已打开的页面。为在普通网页展示入口，扩展现需在 HTTP/HTTPS 网页运行；仅在主动点击功能时提取内容并发送至所选服务商。浏览器设置页、扩展商店等受限页面无法注入。网页功能只理解已经加载且可读取的正文，不读取表单输入、隐藏内容、跨域 iframe 或视频画面；正文过长时明确标注只使用前48,000字符。
+
+开发验证：
+
+```sh
+node --test tests/quiz.test.cjs tests/providers.test.cjs tests/transport.test.cjs
+# 环境中已提供 Playwright 与 Google Chrome：
+node tests/practice-ui.cjs
+node tests/page-ui.cjs
+```
+
+协议参考：[OpenAI](https://developers.openai.com/api/reference/resources/chat)、[Claude Messages](https://platform.claude.com/docs/en/api/messages/create)、[Claude 流式事件](https://platform.claude.com/docs/en/build-with-claude/streaming)、[Kimi](https://platform.kimi.com/docs/api/chat)、[MiMo 官方集成说明](https://github.com/XiaomiMiMo/awesome-mimo-agent/blob/main/docs/oh-my-pi.md)。建议模型不代表账号必然有访问权限，请以服务商控制台为准。
+
 ## 视频练习（1.5.0）
 
-YouTube 和哔哩哔哩视频页新增「视频练习」，与笔记、翻译共用字幕缓存和 DeepSeek 设置。
+YouTube 和哔哩哔哩视频页新增「视频练习」，与笔记、翻译共用字幕缓存和当前 AI 设置。
 
 1. 点击「视频练习」，选择难度、题型与题数（3–12 题）。
 2. 难度固定：**简单＝原文复述；中等＝理解对比；困难＝应用验算/代码判错**。
@@ -27,7 +51,7 @@ YouTube 和哔哩哔哩视频页新增「视频练习」，与笔记、翻译共
 4. 作答后提交自动批改：选择题本地判分；填空和问答按参考答案与评分要点由 AI 评估。未作答计 0 分。可查看逐题反馈、参考解答、评分要点与字幕依据，并修改答案再练。
 5. 「导出试卷」生成不含参考答案的 HTML；「导出答案」单独生成含解答、评分要点及字幕依据的 HTML。用浏览器打开即可打印或另存 PDF。
 
-字幕和提交的主观题答案将发送给所配置的 DeepSeek 模型。练习仅依据字幕，不分析视频画面；AI 题目和评分可对照字幕复核。试卷与作答仅保留在当前页面内存中，刷新或离开会丢失，请及时导出。字幕/API/连接异常会显示错误并保留当前作答，可直接重试。
+字幕和提交的主观题答案将发送给所配置的 AI 服务商。练习仅依据字幕，不分析视频画面；AI 题目和评分可对照字幕复核。试卷与作答仅保留在当前页面内存中，刷新或离开会丢失，请及时导出。字幕/API/连接异常会显示错误并保留当前作答，可直接重试。
 
 新版侧栏、工具栏和设置页采用中性灰与绿色强调，支持窄屏、深色模式、键盘焦点与减少动态效果。
 
@@ -58,7 +82,7 @@ node tests/practice-ui.cjs
 
 ## ✨ 它能做什么
 
-> 同一个视频，四种看法。抓取逻辑按平台适配，差异只在交给 DeepSeek 的提示词，**两个平台都同时拥有这四种能力**。
+> 同一个视频，保留原有四种内容分析能力。抓取逻辑按平台适配，差异只在交给 AI 模型的提示词，**两个平台都同时拥有这四种能力**。
 
 <table>
 <tr>
@@ -208,7 +232,7 @@ node tests/practice-ui.cjs
 1. Chrome 打开 `chrome://extensions/`
 2. 右上角开启 **「开发者模式」**
 3. 点 **「加载已解压的扩展程序」** → 选择本文件夹
-4. 点扩展图标，填入 **DeepSeek API Key**（[获取地址](https://platform.deepseek.com/api_keys)），保存
+4. 点扩展图标，选择服务商并填入其 **API Key**、模型 ID，保存（已有 DeepSeek 配置可继续使用）
 
 ## 🎬 用法
 
@@ -216,7 +240,7 @@ node tests/practice-ui.cjs
 <summary><b>YouTube</b></summary>
 
 1. 打开任意**有字幕(CC)** 的 YouTube 视频
-2. 点标题下方的 **「📝 总结 / 🌐 翻译 / 🔍 分析 / 💬 评论」**
+2. 点标题下方的 **「AI 工具箱」**，展开后选择笔记、翻译、分析、评论或视频练习
 3. 右侧面板出现结果，可复制或下载 `.md`
 
 > 没有字幕轨道的视频无法获取文字稿，会提示更换。
@@ -227,7 +251,7 @@ node tests/practice-ui.cjs
 
 1. **先登录 B 站**（字幕列表接口需要登录态）
 2. 打开任意**有字幕（含 AI 字幕）** 的视频页 `bilibili.com/video/...`
-3. 点**右下角浮动**的工具条按钮
+3. 点**右下角浮动**的「AI 工具箱」展开功能菜单
 
 > B 站页面由 Vue 渲染，工具条做成右下角浮动（挂在 `document.body`），不插入 B 站 DOM 树，避免触发 Vue 重渲染而影响评论 / 右栏加载。<br>
 > 很多 B 站视频本身没有字幕；未登录或无字幕时会给出提示。分 P 视频按当前 `?p=` 抓取对应分集。
@@ -237,14 +261,14 @@ node tests/practice-ui.cjs
 
 ## 🏗️ 项目结构
 
-可扩展架构 —— 共用一套 DeepSeek 配置，每个工具是独立模块；同一视频的字幕与评论会缓存，切换模式不重复抓取。
+可扩展架构 —— 共用当前选中的 AI 服务商配置，每个工具是独立模块；同一视频的字幕与评论会缓存，切换模式不重复抓取。
 
 | 文件 | 作用 |
 |------|------|
 | `manifest.json` | MV3 配置 |
 | `tools.js` | **工具注册表**（共享给 popup），新增工具改这里 |
 | `popup.html` / `popup.js` | 工具箱首页：通用配置 + 动态渲染工具卡片 |
-| `background.js` | Service Worker：调用 DeepSeek（平台无关，流式输出） |
+| `background.js` | Service Worker：调用所选 AI 服务商（平台无关，流式输出） |
 | `content-core.js` | **平台无关共享层**：按钮 / 面板 / 进度 / 流式渲染 / Port |
 | `content-youtube.js` | YouTube 适配器：抓取文字稿 |
 | `content-bilibili.js` | 哔哩哔哩适配器：抓取字幕 |
@@ -255,14 +279,14 @@ node tests/practice-ui.cjs
 1. 在 `tools.js` 的 `DS_TOOLS` 数组追加一项（`id / name / icon / desc / match / options`），弹窗会自动渲染卡片和设置项。
 2. **新增平台**：写一个适配器（参考 `content-bilibili.js`），实现 `getTranscript / getVideoId / isVideoPage / placeBar / steps`，最后 `DSSummarizer.register(...)`；再在 `manifest.json` 的 `content_scripts` 加一段 `["content-core.js", "content-你的平台.js"]` 的 `matches`。面板、进度、流式输出、DeepSeek 调用全部复用。
 3. **全新形态工具**：在 `background.js` 的消息路由里加分支处理。
-4. 通用的 `apiKey / model` 已全局共享，工具私有设置存同一个 `chrome.storage.sync`。
+4. 各服务商配置保存在 `providers`，`provider` 选择当前服务商；旧 `apiKey / model` 保留为 DeepSeek 兼容字段，工具私有设置存同一个 `chrome.storage.sync`。
 
 ## 🔒 隐私与接口
 
 - 🔐 API Key 仅存浏览器本地（`chrome.storage.sync`），**不上传第三方**
-- 🌐 网络请求统一由后台 Service Worker 发出，绕过页面 CORS
-- 🔌 DeepSeek 为 OpenAI 兼容接口：`POST https://api.deepseek.com/chat/completions`
+- 🌐 AI 网络请求统一由后台 Service Worker 发出，使用所选服务商的 API
+- 🔌 保留 DeepSeek 接口，同时支持 Kimi、MiMo、OpenAI、Claude 和其他兼容接口
 
 <div align="center">
-<sub>由 DeepSeek 驱动 · 为理性观看而生</sub>
+<sub>多模型支持 · 为理解与学习而生</sub>
 </div>

@@ -34,13 +34,15 @@
   // 对话历史：[{role, content}]，首条 assistant 即本次生成的总结/分析（仅作模型上下文，不在对话区重复渲染）
   let chatHistory = [];
   let chatBusy = false;
+  let customTools = [], curCustomTool = null;
+  let closeFunctionMenu = () => {};
 
   // 各模式的文案：面板标题 / 流式提示 / 末步（DeepSeek）标签。needsComments 表示该模式还需读取评论。
   const MODES = {
-    summary:   { title: "视频笔记",   gen: "DeepSeek 生成中…", step: "DeepSeek 生成总结" },
-    translate: { title: "原文翻译",   gen: "DeepSeek 翻译中…", step: "DeepSeek 翻译原文" },
-    critique:  { title: "批判性分析", gen: "DeepSeek 分析中…", step: "DeepSeek 批判分析" },
-    comments:  { title: "评论印证",   gen: "DeepSeek 分析中…", step: "DeepSeek 结合评论分析", needsComments: true }
+    summary:   { title: "视频笔记",   gen: "AI 生成中…", step: "AI 生成总结" },
+    translate: { title: "原文翻译",   gen: "AI 翻译中…", step: "AI 翻译原文" },
+    critique:  { title: "批判性分析", gen: "AI 分析中…", step: "AI 批判分析" },
+    comments:  { title: "评论印证",   gen: "AI 分析中…", step: "AI 结合评论分析", needsComments: true }
   };
 
   // ---------- 注入按钮 ----------
@@ -58,18 +60,70 @@
     const bar = document.createElement("div");
     bar.id = "ds-tool-bar";
     bar.className = "ds-tool-bar";
-    bar.append(
-      mkBtn("视频笔记", () => onAction("summary")),
-      mkBtn("翻译原文", () => onAction("translate")),
-      mkBtn("批判性分析", () => onAction("critique")),
-      mkBtn("评论印证", () => onAction("comments")),
-      mkBtn("视频练习", () => onAction("quiz"))
-    );
+    const launcher = mkBtn("AI 工具箱", () => setMenu(menu.hidden));
+    launcher.className = "ds-launcher";
+    if (chrome.runtime.getURL) { const mark = document.createElement("img"); mark.src = chrome.runtime.getURL("icons/icon48.png"); mark.alt = ""; mark.width = 20; mark.height = 20; launcher.prepend(mark); }
+    launcher.setAttribute("aria-expanded", "false");
+    launcher.setAttribute("aria-controls", "ds-function-menu");
+    const menu = document.createElement("div");
+    menu.id = "ds-function-menu"; menu.className = "ds-function-menu"; menu.hidden = true;
+    menu.setAttribute("aria-label", "AI 工具箱功能");
+    const caption = document.createElement("div"); caption.className = "ds-menu-caption";
+    caption.textContent = adapter.sourceType === "page" ? "当前页面 · 正文阅读" : "当前视频 · 字幕学习";
+    menu.append(caption);
+    const actions = adapter.sourceType === "page" ? [["理解页面", "summary"], ["页面出题", "quiz"]] : [["视频笔记", "summary"], ["翻译原文", "translate"], ["批判性分析", "critique"], ["评论印证", "comments"], ["视频练习", "quiz"]];
+    for (const [label, mode] of actions) menu.append(mkBtn(label, () => { setMenu(false); onAction(mode); }));
+    closeFunctionMenu = () => setMenu(false);
+    renderCustomMenu(menu);
+    function setMenu(open) {
+      menu.hidden = !open; launcher.setAttribute("aria-expanded", String(open));
+      if (open) menu.querySelector("button")?.focus();
+    }
+    bar.append(launcher, menu);
+    bar.addEventListener("keydown", ev => {
+      if (ev.key === "Escape") { setMenu(false); launcher.focus(); }
+      if (ev.key === "ArrowDown" || ev.key === "ArrowUp") {
+        ev.preventDefault();
+        if (menu.hidden) return setMenu(true);
+        const buttons = [...menu.querySelectorAll("button")], index = buttons.indexOf(document.activeElement);
+        buttons[(index + (ev.key === "ArrowDown" ? 1 : -1) + buttons.length) % buttons.length].focus();
+      }
+    });
+    bar.addEventListener("focusout", ev => { if (!bar.contains(ev.relatedTarget)) setMenu(false); });
+    const dismiss = ev => { if (!bar.isConnected) document.removeEventListener("pointerdown", dismiss); else if (!bar.contains(ev.target)) setMenu(false); };
+    document.addEventListener("pointerdown", dismiss);
 
     let placed = false;
     try { placed = !!(adapter.placeBar && adapter.placeBar(bar)); } catch (e) { placed = false; }
     if (!placed) { bar.classList.add("ds-floating"); document.body.appendChild(bar); }
   }
+
+  function renderCustomMenu(menu = document.getElementById("ds-function-menu")) {
+    if (!menu || !adapter) return;
+    const old = menu.querySelector(".ds-custom-menu");
+    if (old?.contains(document.activeElement)) document.querySelector(".ds-launcher")?.focus();
+    old?.remove();
+    const tools = AICustomTools.available(customTools, adapter.sourceType);
+    if (!tools.length) return;
+    const group = document.createElement("div"); group.className = "ds-custom-menu";
+    const caption = document.createElement("div"); caption.className = "ds-menu-caption"; caption.textContent = "我的工具"; group.append(caption);
+    for (const tool of tools) {
+      const button = mkBtn(tool.name, () => { closeFunctionMenu(); onAction("custom", tool); });
+      button.dataset.customToolId = tool.id; group.append(button);
+    }
+    menu.append(group);
+  }
+  async function loadCustomTools() {
+    if (!chrome.storage?.local) return;
+    try { const data = await chrome.storage.local.get({ customTools: [] }); customTools = AICustomTools.list(data.customTools); renderCustomMenu(); }
+    catch (error) { console.warn("AI工具箱：读取自定义工具失败", error.message); }
+  }
+  chrome.storage?.onChanged?.addListener((changes, area) => {
+    if (area !== "local" || !changes.customTools) return;
+    try { customTools = AICustomTools.list(changes.customTools.newValue || []); renderCustomMenu(); }
+    catch (error) { console.warn("AI工具箱：自定义工具配置无效", error.message); }
+  });
+  loadCustomTools();
 
   // ---------- 面板 ----------
   function ensurePanel() {
@@ -78,7 +132,7 @@
     panel.className = "ds-panel";
     panel.innerHTML = `
       <div class="ds-panel-head">
-        <div><span class="ds-panel-kicker">DEEPSEEK / 视频学习</span><span class="ds-panel-title">视频笔记</span></div>
+        <div><span class="ds-panel-kicker">AI TOOLBOX / 阅读与学习</span><span class="ds-panel-title">视频笔记</span></div>
         <div class="ds-panel-actions">
           <button class="ds-icon-btn" id="ds-copy">复制</button>
           <button class="ds-icon-btn" id="ds-download">下载</button>
@@ -90,7 +144,7 @@
         <div class="ds-chat-thread" id="ds-chat-thread"></div>
         <div class="ds-chat-input-row">
           <textarea id="ds-chat-input" class="ds-chat-input" rows="1"
-            placeholder="追问视频内容，AI 会结合字幕补充…"></textarea>
+            placeholder="追问当前内容，AI 会结合原文补充…"></textarea>
           <button class="ds-chat-send" id="ds-chat-send" title="发送（Enter）">↑</button>
         </div>
       </div>`;
@@ -160,7 +214,7 @@
     const port = chrome.runtime.connect({ name: "summarize" });
     port.postMessage({
       type: "CHAT", mode: curMode, transcript: curTranscript,
-      comments: curComments, meta: curMeta, history: chatHistory
+      comments: curComments, meta: curMeta, history: chatHistory, customTool: curCustomTool
     });
     port.onMessage.addListener((m) => {
       if (m.type === "chunk") {
@@ -204,14 +258,14 @@
       `<title>${escapeHtml(title)}</title>` +
       `<style>body{max-width:800px;margin:24px auto;padding:0 16px;` +
       `font-family:"PingFang SC","Microsoft YaHei",system-ui,sans-serif;line-height:1.75;color:#1f2328}` +
-      `h1,h2,h3{line-height:1.3}h2{color:#4d6bfe}` +
-      `.ds-ts{font-size:.85em;font-weight:600;color:#4d6bfe;background:#eef1ff;border-radius:4px;padding:0 5px}` +
+      `h1,h2,h3{line-height:1.3}h2{color:#31765b}` +
+      `.ds-ts{font-size:.85em;font-weight:600;color:#31765b;background:#edf4ef;border-radius:4px;padding:0 5px}` +
       `.ds-badge{display:inline-block;padding:2px 10px;border-radius:12px;font-size:12px;font-weight:700;color:#fff;vertical-align:middle}` +
-      `.ds-badge-good{background:#2da44e}.ds-badge-warn{background:#d4a72c}.ds-badge-bad{background:#cf222e}.ds-badge-info{background:#4d6bfe}` +
+      `.ds-badge-good{background:#2da44e}.ds-badge-warn{background:#d4a72c}.ds-badge-bad{background:#cf222e}.ds-badge-info{background:#31765b}` +
       `.ds-meter{display:inline-block;vertical-align:middle;width:120px;height:10px;margin:0 6px;border-radius:6px;background:#eceef5;overflow:hidden}` +
-      `.ds-meter>span{display:block;height:100%;border-radius:6px;background:linear-gradient(90deg,#4d6bfe,#6d3bfe)}` +
+      `.ds-meter>span{display:block;height:100%;border-radius:6px;background:linear-gradient(90deg,#31765b,#31765b)}` +
       `.ds-card{background:#f6f7fb;border-radius:10px;padding:10px 12px;margin:8px 0}` +
-      `table{border-collapse:collapse;width:100%;margin:8px 0;font-size:14px}th,td{border:1px solid #e3e6ee;padding:5px 8px;text-align:left}th{background:#eef1ff}` +
+      `table{border-collapse:collapse;width:100%;margin:8px 0;font-size:14px}th,td{border:1px solid #e3e6ee;padding:5px 8px;text-align:left}th{background:#edf4ef}` +
       `</style></head><body>\n${renderDoc(lastSummary)}\n</body></html>`;
     const blob = new Blob([doc], { type: "text/html;charset=utf-8" });
     const url = URL.createObjectURL(blob);
@@ -222,19 +276,27 @@
     URL.revokeObjectURL(url);
   }
 
-  // DeepSeek 直接输出 HTML：去掉代码围栏、剥离危险标签/内联事件后直接渲染（不再做 Markdown 转换）
+  // Build a small document allowlist; generated content cannot load remote assets or execute code.
   function renderDoc(html) {
-    let s = String(html)
-      .replace(/```html\s*/gi, "")
-      .replace(/```/g, "")
-      .replace(/<\/?(?:script|style|iframe|object|embed|link|meta|base|form)\b[^>]*>/gi, "")
-      .replace(/\son\w+\s*=\s*"[^"]*"/gi, "")
-      .replace(/\son\w+\s*=\s*'[^']*'/gi, "")
-      .replace(/\son\w+\s*=\s*[^\s>]+/gi, "")
-      .replace(/javascript:/gi, "");
-    // 裸露的 [m:ss] / [h:mm:ss] 时间戳渲染成小标签
-    s = s.replace(/\[(\d{1,2}:\d{2}(?::\d{2})?)\]/g, '<span class="ds-ts">$1</span>');
-    return s;
+    const template = document.createElement("template");
+    template.innerHTML = String(html).replace(/```html\s*/gi, "").replace(/```/g, "");
+    const output = document.createElement("div");
+    const allowed = new Set(["H1", "H2", "H3", "P", "UL", "LI", "OL", "STRONG", "EM", "BR", "SPAN", "DIV", "TABLE", "THEAD", "TBODY", "TR", "TD", "TH", "BLOCKQUOTE", "PRE", "CODE"]);
+    const blocked = new Set(["SCRIPT", "STYLE", "IFRAME", "OBJECT", "EMBED", "SVG", "MATH", "TEMPLATE", "FORM"]);
+    function clean(node, parent) {
+      if (node.nodeType === Node.TEXT_NODE) { parent.append(document.createTextNode(node.textContent)); return; }
+      if (node.nodeType !== Node.ELEMENT_NODE || blocked.has(node.tagName)) return;
+      if (!allowed.has(node.tagName)) { for (const child of node.childNodes) clean(child, parent); return; }
+      const el = document.createElement(node.tagName.toLowerCase());
+      const classes = [...node.classList].filter(c => /^ds-(?:ts|card|badge(?:-(?:good|warn|bad|info))?|meter)$/.test(c));
+      if (classes.length) el.className = classes.join(" ");
+      const width = node.style.width;
+      if (node.tagName === "SPAN" && /^\d{1,3}(?:\.\d+)?%$/.test(width) && parseFloat(width) <= 100) el.style.width = width;
+      for (const child of node.childNodes) clean(child, el);
+      parent.append(el);
+    }
+    for (const child of template.content.childNodes) clean(child, output);
+    return output.innerHTML.replace(/\[(\d{1,2}:\d{2}(?::\d{2})?)\]/g, '<span class="ds-ts">$1</span>');
   }
 
   // ---------- 进度渲染 ----------
@@ -265,7 +327,7 @@
   // ---------- 流式渲染（节流到每帧一次） ----------
   let rafId = 0;
   function paintStream(done) {
-    const tag = done ? "" : `<div class="ds-gen-tag"><span class="ds-mini-spinner"></span> DeepSeek 生成中…</div>`;
+    const tag = done ? "" : `<div class="ds-gen-tag"><span class="ds-mini-spinner"></span> AI 生成中…</div>`;
     const el = body();
     el.innerHTML = metaLine + tag + `<div class="ds-doc">${renderDoc(lastSummary)}</div>`;
     el.scrollTop = el.scrollHeight;
@@ -294,24 +356,26 @@
   let inFlight = false;
   let transcriptCache = null; // { videoId, transcript, meta }，各按钮共用，避免重复抓字幕被限流
   let commentsCache = null;   // { videoId, comments }，评论印证按钮复用
-  async function onAction(mode) {
+  async function onAction(mode, customTool = null) {
     // 执行中禁止重复点击：连点会叠加抓取请求，容易把自己打进 B 站风控
     if (inFlight || window.DSPractice.busy) { openPanel(); return; }
     panel?.querySelectorAll("#ds-copy, #ds-download").forEach(b => b.hidden = mode === "quiz");
     if (mode === "quiz") {
-      const sourceVideoId = adapter.getVideoId();
-      openPanel(); hideChat(); setPanelTitle("视频练习");
+      const sourceAdapter = adapter;
+      const sourceVideoId = sourceAdapter.getVideoId();
+      openPanel(); hideChat(); setPanelTitle(adapter.sourceType === "page" ? "页面出题" : "视频练习");
       panel.querySelectorAll("#ds-copy, #ds-download").forEach(b => b.hidden = true);
       window.DSPractice.mount(body(), {
-        videoId: sourceVideoId, url: location.href,
+        videoId: sourceVideoId, url: location.href, sourceType: sourceAdapter.sourceType || "video",
         load: async () => {
-          const videoId = adapter.getVideoId();
+          const videoId = sourceAdapter.getVideoId();
+          if (adapter !== sourceAdapter) throw new Error("页面已切换，请重新打开出题功能。");
           if (!videoId) throw new Error("请在视频页面使用练习功能。");
           if (videoId !== sourceVideoId) throw new Error("视频已切换，请重新打开视频练习。");
-          if (transcriptCache?.videoId === videoId) return transcriptCache;
-          const data = await adapter.getTranscript(videoId, () => {});
-          if (adapter.getVideoId() !== sourceVideoId) throw new Error("视频已切换，请重新打开视频练习。");
-          if (!data.transcript?.trim()) throw new Error("这个视频没有可用字幕。");
+          if (sourceAdapter.cacheTranscript !== false && transcriptCache?.videoId === videoId) return transcriptCache;
+          const data = await sourceAdapter.getTranscript(videoId, () => {});
+          if (adapter !== sourceAdapter || sourceAdapter.getVideoId() !== sourceVideoId) throw new Error("视频已切换，请重新打开视频练习。");
+          if (!data.transcript?.trim()) throw new Error("当前内容没有可用的文字资料。");
           transcriptCache = { ...data, videoId };
           return data;
         }
@@ -321,7 +385,7 @@
     const videoId = adapter.getVideoId();
     if (!videoId) return;
     inFlight = true;
-    const L = MODES[mode] || MODES.summary;
+    const L = mode === "custom" ? { title: customTool.name, gen: "AI 正在按你的提示词生成…", step: "生成自定义内容" } : adapter.sourceType === "page" ? { title: "理解页面", gen: "AI 正在整理页面脉络…", step: "AI 理解与总结" } : MODES[mode] || MODES.summary;
     const wantComments = !!L.needsComments;
     lastSummary = "";
     metaLine = "";
@@ -339,7 +403,7 @@
 
     // 抓文字稿。同一视频已抓过就复用缓存，不再重复打平台接口（防限流、更快）
     let transcript, meta;
-    if (transcriptCache && transcriptCache.videoId === videoId) {
+    if (adapter.cacheTranscript !== false && transcriptCache && transcriptCache.videoId === videoId) {
       transcript = transcriptCache.transcript;
       meta = transcriptCache.meta;
       renderProgress(dataSteps.length, "字幕已就绪（复用上次抓取）…", meta);
@@ -379,12 +443,12 @@
     }
 
     // 记下本次结果的上下文，供「追问」时连同发给后台
-    curMode = mode; curMeta = meta; curTranscript = transcript; curComments = comments;
+    curMode = mode; curMeta = { ...meta, url: meta.url || location.href }; curTranscript = transcript; curComments = comments; curCustomTool = customTool;
 
     // 末步：后台流式调用 DeepSeek
     renderProgress(activeSteps.length, L.gen, meta);
     const port = chrome.runtime.connect({ name: "summarize" });
-    port.postMessage({ type: "START", mode, transcript, comments, meta });
+    port.postMessage({ type: "START", mode, transcript, comments, meta: curMeta, customToolId: customTool?.id });
 
     port.onMessage.addListener((m) => {
       if (m.type === "chunk") {
@@ -392,6 +456,7 @@
         scheduleStreamRender(false);
       } else if (m.type === "done") {
         lastTitle = m.meta?.title || lastTitle;
+        if (mode === "custom" && m.customTool) curCustomTool = m.customTool;
         scheduleStreamRender(true);
         // 生成完毕：用本次结果作为对话起点，开放追问
         chatHistory = lastSummary ? [{ role: "assistant", content: lastSummary }] : [];
@@ -414,18 +479,26 @@
   }
 
   // ---------- 注册 + SPA 导航重新注入 ----------
+  const adapters = [];
+  let observing = false, scheduled = false;
+  function chooseAdapter() {
+    scheduled = false;
+    const next = adapters.find(a => a.name !== "page" && a.isVideoPage() && a.getVideoId()) || adapters.find(a => a.name === "page" && a.isVideoPage());
+    if (next !== adapter) {
+      adapter = next;
+      document.getElementById("ds-tool-bar")?.remove();
+      transcriptCache = null; commentsCache = null;
+    }
+    if (adapter) injectButton();
+  }
   function register(a) {
-    adapter = a;
-    let scheduled = false;
-    const tryInject = () => {
-      scheduled = false;
-      if (adapter.isVideoPage() && adapter.getVideoId()) injectButton();
-    };
-    // 评论区等动态内容会触发大量 mutation，debounce 一下，避免每次都跑选择器拖慢页面
-    const schedule = () => { if (!scheduled) { scheduled = true; setTimeout(tryInject, 300); } };
-    const obs = new MutationObserver(schedule);
-    obs.observe(document.body, { childList: true, subtree: true });
-    tryInject();
+    adapters.push(a);
+    chooseAdapter();
+    if (observing) return;
+    observing = true;
+    const schedule = () => { if (!scheduled) { scheduled = true; setTimeout(chooseAdapter, 300); } };
+    new MutationObserver(schedule).observe(document.body, { childList: true, subtree: true });
+    window.addEventListener("popstate", schedule);
   }
 
   // ---------- 共享小工具，供适配器使用 ----------

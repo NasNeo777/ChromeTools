@@ -41,20 +41,18 @@ window.DS_TOOLS = [
     desc: "同样支持笔记、翻译、分析和视频练习。共用模型与输出设置；请登录 B 站，并选择有字幕的视频。",
     match: "https://www.bilibili.com/video/*"
     // 不重复声明 style / language：与 YouTube 工具共用同一组存储字段
+  },
+  {
+    id: "page-learning", name: "网页理解与出题", icon: "03",
+    desc: "自动读取文章和页面正文，生成摘要、理解脉络与练习。支持追问、自动批改，分别导出试卷与答案。",
+    match: "<all_urls>"
   }
-  // 下一个工具示例（占位，未实现）：
-  // {
-  //   id: "page-translate",
-  //   name: "整页翻译",
-  //   icon: "🌐",
-  //   desc: "把当前网页正文翻译成中文。",
-  //   match: "<all_urls>",
-  //   options: [...]
-  // }
 ];
 
 // 全局共享设置（所有工具公用 DeepSeek 凭证）
 window.DS_GLOBAL_DEFAULTS = {
+  provider: "deepseek",
+  providers: {},
   apiKey: "",
-  model: "deepseek-chat"
+  model: "deepseek-flash"
 };

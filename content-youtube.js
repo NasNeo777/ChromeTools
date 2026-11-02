@@ -343,7 +343,7 @@
 
   window.DSSummarizer.register({
     name: "youtube",
-    isVideoPage: () => location.pathname === "/watch",
+    isVideoPage: () => /(^|\.)youtube\.com$/.test(location.hostname) && location.pathname === "/watch",
     getVideoId,
     getTranscript,
     getComments,

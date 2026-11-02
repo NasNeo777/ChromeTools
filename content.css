@@ -55,3 +55,24 @@
 @media(prefers-reduced-motion:reduce){.ds-panel *,.ds-tool-bar *{animation:none!important;transition:none!important}.ds-panel button:active,.ds-tool-bar button:active{transform:none}}
 @media(prefers-reduced-transparency:reduce){.ds-panel-head,.ds-tool-bar{background:var(--ds-wash);backdrop-filter:none}}
 @media(prefers-contrast:more){.ds-panel,.ds-tool-bar{--ds-muted:var(--ds-text);--ds-line:#8b958e}.ds-panel-head{background:var(--ds-bg);backdrop-filter:none}}
+/* One quiet entry point; menu grows from the launcher on the same spatial axis. */
+.ds-tool-bar{position:relative;display:inline-flex;padding:0;border:0;background:transparent;box-shadow:none;isolation:isolate}
+.ds-launcher{display:inline-flex;align-items:center;gap:9px;border:1px solid #ffffff38;border-radius:14px;background:var(--ds-accent);color:#fff;padding:11px 17px;font-size:13px!important;font-weight:650!important;box-shadow:inset 0 1px 0 #ffffff1f,0 6px 24px #243b2e1a}
+.ds-launcher::before{content:"";width:13px;height:13px;display:block;border:1.5px solid currentColor;border-radius:3px;box-shadow:inset 0 3px 0 #ffffff40}
+.ds-launcher::after{content:"";width:5px;height:5px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:rotate(45deg);margin-left:4px;margin-bottom:3px}
+.ds-launcher[aria-expanded=true]::after{transform:rotate(225deg);margin-bottom:-3px}
+.ds-tool-bar.ds-floating{background:transparent;backdrop-filter:none}
+.ds-function-menu{position:absolute;top:calc(100% + 9px);left:0;width:228px;max-width:calc(100vw - 32px);padding:7px;display:grid;gap:3px;border:1px solid var(--ds-line);border-radius:17px;background:var(--ds-bg);box-shadow:inset 0 1px 0 #ffffff66,0 14px 45px #243b2e26;transform-origin:top left;animation:ds-menu-in .2s cubic-bezier(.16,1,.3,1);z-index:1}
+.ds-tool-bar [hidden]{display:none!important}
+.ds-menu-caption{font-size:10px;color:var(--ds-muted);padding:9px 10px;letter-spacing:.03em;border-bottom:1px solid var(--ds-line);margin-bottom:3px}
+.ds-function-menu .ds-summary-btn{width:100%;justify-content:flex-start;padding:10px 12px;background:transparent;color:var(--ds-text)!important;border-radius:10px;font-weight:500!important}
+.ds-function-menu .ds-summary-btn:hover,.ds-function-menu .ds-summary-btn:focus-visible{background:var(--ds-soft);color:var(--ds-accent)!important}
+.ds-function-menu .ds-summary-btn:last-child{background:var(--ds-soft);color:var(--ds-accent)!important;font-weight:650!important}
+.ds-floating .ds-function-menu{top:auto;bottom:calc(100% + 9px);left:auto;right:0;transform-origin:bottom right}
+@keyframes ds-menu-in{from{opacity:0;transform:translateY(-4px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+@media(prefers-color-scheme:dark){.ds-launcher{color:#1d2921}}
+@media(prefers-reduced-motion:reduce){.ds-function-menu{animation:none}}
+
+.ds-launcher img{width:20px;height:20px;border-radius:5px;object-fit:contain}.ds-launcher:has(img)::before{display:none}
+.ds-function-menu{max-height:min(560px,calc(100dvh - 120px));overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}.ds-custom-menu{border-top:1px solid var(--ds-line);margin-top:5px;padding-top:4px}.ds-custom-menu .ds-menu-caption{border:0;margin:0;padding-top:7px;padding-bottom:5px}.ds-custom-menu .ds-summary-btn{overflow-wrap:anywhere;white-space:normal;text-align:left}
+.ds-doc pre,.ds-chat-text pre{white-space:pre-wrap;overflow-wrap:anywhere;background:var(--ds-wash);border:1px solid var(--ds-line);border-radius:10px;padding:12px;font:12px/1.7 ui-monospace,monospace}.ds-doc code,.ds-chat-text code{font-family:ui-monospace,monospace}

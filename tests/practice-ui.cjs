@@ -6,8 +6,9 @@ const fs = require('node:fs');
 (async () => {
   const browser = await chromium.launch({ channel: 'chrome', headless: true });
   try {
+    async function action(page,name) { await page.getByRole('button',{name:'AI 工具箱',exact:true}).click(); await page.getByRole('button',{name,exact:true}).click(); }
     const page = await browser.newPage({ viewport: { width: 1440, height: 1000 }, deviceScaleFactor: 1 });
-    const errors = []; page.on('pageerror', err => errors.push(err.message));
+    const errors = []; page.on('pageerror', err => { errors.push(err.message); console.error('UI error:', err.message); });
     await page.setContent('<html lang="zh-CN"><body style="margin:0;background:#f1f3f2"><main style="padding:80px;font:24px system-ui;color:#69746d">视频学习 · 预览环境</main></body></html>');
     await page.addStyleTag({path:path.resolve('content.css')});
     await page.evaluate(() => {
@@ -20,10 +21,10 @@ const fs = require('node:fs');
         const response=msg.type==='QUIZ_GENERATE'?{type:'quiz-result',quiz:{questions,config:msg.config}}:{type:'quiz-grade',results:msg.quiz.questions.map((q,i)=>({id:q.id,score:!msg.answers[i]?0:q.type==='choice'?(msg.answers[i]==='A'?10:0):7,feedback:msg.answers[i]?'理解了复用机制，可进一步说明缓存失效的条件。':'未作答。'}))};listeners.forEach(fn=>fn(response));
       },100);}}}}};
     });
-    for(const file of ['quiz-shared.js','quiz-content.js','content-core.js'])await page.addScriptTag({path:path.resolve(file)});
+    for(const file of ['custom-tools.js','quiz-shared.js','quiz-content.js','content-core.js'])await page.addScriptTag({path:path.resolve(file)});
     await page.evaluate(()=>DSSummarizer.register({isVideoPage:()=>true,getVideoId:()=> 'test-video',placeBar:bar=>{document.body.append(bar);return true;},steps:()=>['读取字幕'],getTranscript:async()=>{if(window.testLoadFail){window.testLoadFail=false;throw Error('没有可用字幕');}return {transcript:'[02:18] 同一视频的字幕会缓存，切换模式不重复抓取。',meta:{title:'缓存如何减少重复请求 · 视频学习示例'}};}}));
-    await page.getByRole('button',{name:'视频练习',exact:true}).click();
-    await page.getByRole('button',{name:/简单 原文复述/}).click();
+    await action(page,'视频练习');
+    await page.locator('[data-difficulty=easy]').click();
     await page.selectOption('#ds-quiz-count','3');
     await page.evaluate(()=>window.testLoadFail=true);
     await page.click('#ds-quiz-generate');
@@ -37,10 +38,10 @@ const fs = require('node:fs');
     await page.fill('#ds-answer-2','重复');
     assert.match(await page.locator('#ds-answered').innerText(),/3 \/ 3/);
     // Returning to the same practice keeps the draft and source context.
-    await page.getByRole('button',{name:'视频笔记',exact:true}).click();
+    await action(page,'视频笔记');
     await page.waitForSelector('.ds-doc');
     assert.equal(await page.locator('#ds-copy').isVisible(),true);
-    await page.getByRole('button',{name:'视频练习',exact:true}).click();
+    await action(page,'视频练习');
     assert.equal(await page.inputValue('#ds-answer-1'),'缓存复用旧结果，重复请求会重新读取。');
     await page.evaluate(()=>window.testGradeFail=true);
     await page.click('#ds-quiz-submit');
@@ -61,7 +62,7 @@ const fs = require('node:fs');
     await page.click('#ds-quiz-submit');
     await page.getByRole('alert').filter({hasText:'连接中断'}).waitFor();
     assert.equal(await page.inputValue('#ds-answer-2'),'重复');
-    await page.getByRole('button',{name:'视频练习',exact:true}).click();
+    await action(page,'视频练习');
     await page.click('#ds-quiz-reset');
     await page.screenshot({path:'screenshots/practice/setup-desktop.png'});
     await page.locator('.ds-panel').screenshot({path:'screenshots/practice/preview.png'});
@@ -77,10 +78,10 @@ const fs = require('node:fs');
     const popup=await browser.newPage({viewport:{width:420,height:950}});
     await popup.route('**/*', route=>{
       const filename=new URL(route.request().url()).pathname.slice(1)||'popup.html';
-      if(!['popup.html','popup.css','popup.js','tools.js'].includes(filename))return route.abort();
-      return route.fulfill({path:path.resolve(filename),contentType:filename.endsWith('.js')?'application/javascript':filename.endsWith('.css')?'text/css':'text/html'});
+      if(!['popup.html','popup.css','popup.js','tools.js','providers.js','custom-tools.js','custom-tools-editor.js','icons/icon128.png'].includes(filename))return route.abort();
+      return route.fulfill({path:path.resolve(filename),contentType:filename.endsWith('.png')?'image/png':filename.endsWith('.js')?'application/javascript':filename.endsWith('.css')?'text/css':'text/html'});
     });
-    await popup.addInitScript(()=>{window.chrome={runtime:{},storage:{sync:{get:async d=>d,set:(d,cb)=>cb()}},tabs:{query:async()=>[{url:'https://www.youtube.com/watch?v=test'}]}}});
+    await popup.addInitScript(()=>{window.chrome={runtime:{},storage:{local:{get:async()=>({customTools:[]}),set:async()=>{}},sync:{get:async d=>d,set:async(d)=>{window.savedSettings=d;}}},tabs:{query:async()=>[{url:'https://www.youtube.com/watch?v=test'}]}}});
     await popup.goto('https://extension-preview.local/popup.html');
     await popup.waitForSelector('.card-head');await popup.screenshot({path:'screenshots/practice/settings.png'});
     await popup.click('#save');assert.match(await popup.locator('#status').innerText(),/请填写/);

@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
 const Q = require('../quiz-shared.js');
+const AIProviders = require('../providers.js');
 const config = { difficulty: 'medium', count: 3, types: ['choice', 'short', 'blank'] };
 const fixture = { questions: [
   { type: 'choice', prompt: '缓存的主要作用是什么？', options: ['减少重复读取', '增加读取次数', '删除字幕', '改变视频'], answer: 'A', rubric: ['减少重复读取'], explanation: '缓存复用读取结果。', evidence: '[00:12] 缓存减少重复读取。' },
@@ -42,9 +43,9 @@ test('JSON parsing supports fences and reports malformed output', () => {
 });
 function worker(response, settings={apiKey:'test'}) {
   let connect, calls=[];
-  const context = vm.createContext({DSQuiz:Q, AbortController, TextDecoder, setTimeout, clearTimeout,
+  const context = vm.createContext({DSQuiz:Q, AIProviders, URL, AbortController, TextDecoder, setTimeout, clearTimeout,
     importScripts(){}, chrome:{storage:{sync:{get:async()=>settings}},runtime:{onConnect:{addListener:fn=>connect=fn},onMessage:{addListener(){}}}},
-    fetch:async(url,init)=>{calls.push(JSON.parse(init.body)); let sent=false; return {ok:true,body:{getReader:()=>({read:async()=>sent?{done:true}:(sent=true,{done:false,value:new TextEncoder().encode('data: '+JSON.stringify({choices:[{delta:{content:JSON.stringify(response)}}]})+'\n\ndata: [DONE]\n\n')})})}};}
+    fetch:async(url,init)=>{calls.push(JSON.parse(init.body)); let sent=false; return {ok:true,body:{getReader:()=>({cancel:async()=>{},read:async()=>sent?{done:true}:(sent=true,{done:false,value:new TextEncoder().encode('data: '+JSON.stringify({choices:[{delta:{content:JSON.stringify(response)}}]})+'\n\ndata: [DONE]\n\n')})})}};}
   });
   vm.runInContext(fs.readFileSync(require.resolve('../background.js'),'utf8'),context);
   return {calls, request:msg=>new Promise(resolve=>{let handler;connect({name:'summarize',onDisconnect:{addListener(){},removeListener(){}},onMessage:{addListener:fn=>handler=fn},postMessage:m=>{if(m.type!=='quiz-progress')resolve(m)}});handler(msg);})};

@@ -1,18 +1,15 @@
 {
   "manifest_version": 3,
-  "name": "DeepSeek 工具箱",
-  "version": "1.5.0",
-  "description": "YouTube / 哔哩哔哩视频总结、翻译、分析与字幕出题，支持自动批改和导出试卷及答案。",
+  "name": "AI工具箱",
+  "version": "1.7.0",
+  "description": "理解网页与视频：总结、翻译、分析、出题批改与自定义提示词工具；支持多家 AI API，导出试卷及答案。",
   "permissions": [
     "storage",
     "activeTab"
   ],
   "host_permissions": [
-    "https://www.youtube.com/*",
-    "https://youtubei.googleapis.com/*",
-    "https://*.bilibili.com/*",
-    "https://*.hdslb.com/*",
-    "https://api.deepseek.com/*"
+    "http://*/*",
+    "https://*/*"
   ],
   "background": {
     "service_worker": "background.js"
@@ -20,28 +17,17 @@
   "content_scripts": [
     {
       "matches": [
-        "https://www.youtube.com/watch*"
+        "http://*/*",
+        "https://*/*"
       ],
       "js": [
+        "custom-tools.js",
         "quiz-shared.js",
         "quiz-content.js",
         "content-core.js",
-        "content-youtube.js"
-      ],
-      "css": [
-        "content.css"
-      ],
-      "run_at": "document_idle"
-    },
-    {
-      "matches": [
-        "https://www.bilibili.com/video/*"
-      ],
-      "js": [
-        "quiz-shared.js",
-        "quiz-content.js",
-        "content-core.js",
-        "content-bilibili.js"
+        "content-youtube.js",
+        "content-bilibili.js",
+        "content-page.js"
       ],
       "css": [
         "content.css"
@@ -51,7 +37,7 @@
   ],
   "action": {
     "default_popup": "popup.html",
-    "default_title": "DeepSeek 视频学习工具",
+    "default_title": "AI工具箱",
     "default_icon": {
       "16": "icons/icon16.png",
       "48": "icons/icon48.png",
@@ -62,5 +48,16 @@
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
-  }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "icons/icon48.png"
+      ],
+      "matches": [
+        "http://*/*",
+        "https://*/*"
+      ]
+    }
+  ]
 }
