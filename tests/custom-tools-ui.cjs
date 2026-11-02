@@ -41,7 +41,7 @@ const assert=require('node:assert/strict');const fs=require('node:fs');const pat
   assert.equal((await page.evaluate(()=>sentMessages.find(m=>m.type==='CHAT'))).customTool.name,'行动清单');
   fs.mkdirSync('screenshots/toolbox',{recursive:true});await popup.locator('.custom-module').screenshot({path:'screenshots/toolbox/custom-tools.png',animations:'disabled'});
   await page.click('#ds-close');if(await launcher.getAttribute('aria-expanded')==='false')await launcher.click();await page.screenshot({path:'screenshots/toolbox/custom-menu.png',animations:'disabled'});
-  await popup.getByRole('button',{name:'删除 结构化改写',exact:true}).click();await page.waitForFunction(()=>!document.querySelector('[data-custom-tool-id]'));assert.equal(store.local.customTools.length,0);assert.equal(await page.getByRole('button',{name:'理解页面',exact:true}).count(),1);assert.equal(store.sync.apiKey,'existing-test-key');
+  await popup.getByRole('button',{name:'删除 结构化改写',exact:true}).click();await page.waitForFunction(()=>!document.querySelector('[data-custom-tool-id]'));assert.equal(store.local.customTools.length,0);assert.equal(await page.getByRole('button',{name:'总结网页',exact:true}).count(),1);assert.equal(store.sync.apiKey,'existing-test-key');
   assert.deepEqual(errors,[]);
   console.log('Custom tools UI passed: validation, independent saving, long prompts, live menu updates, generation, safe document rendering, chat, export, editing, disabling, scope and deletion.');
  }finally{await browser.close();}

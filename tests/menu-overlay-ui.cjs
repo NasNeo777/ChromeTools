@@ -36,7 +36,7 @@ const fs = require('node:fs');
       }
       await page.emulateMedia({ reducedMotion: 'reduce' });
       await checkHitTargets();
-      await page.keyboard.press('ArrowDown'); assert.equal(await page.evaluate(() => document.activeElement.textContent), '翻译原文');
+      await page.keyboard.press('ArrowDown'); assert.equal(await page.evaluate(() => document.activeElement.textContent), '翻译字幕');
       await page.keyboard.press('Escape'); assert.equal(await launcher.getAttribute('aria-expanded'), 'false'); assert.equal(await launcher.evaluate(el => el === document.activeElement), true);
       await launcher.click(); await page.locator('#outside').click(); assert.equal(await launcher.getAttribute('aria-expanded'), 'false');
       await launcher.click();

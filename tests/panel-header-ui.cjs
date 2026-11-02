@@ -15,7 +15,7 @@ const fs = require('node:fs');
     for (const file of ['custom-tools.js', 'quiz-shared.js', 'quiz-content.js', 'content-core.js']) await page.addScriptTag({ path: path.resolve(file) });
     await page.evaluate(() => DSSummarizer.register({ name: 'bilibili', isVideoPage: () => true, getVideoId: () => 'header-fixture', steps: () => ['读取字幕'], getTranscript: async () => ({ transcript: '[00:12] 缓存复用读取结果。', meta: { title: '缓存机制 · 界面验证' } }) }));
     await page.getByRole('button', { name: 'AI 工具箱', exact: true }).click();
-    await page.getByRole('button', { name: '视频练习', exact: true }).click();
+    await page.getByRole('button', { name: '出题自测', exact: true }).click();
     // Loaded AFTER extension styles to emulate late-injected site/player CSS.
     await page.addStyleTag({ content: '.bili-video-page span {color:white} .bili-video-page .ds-panel-title {color:white;-webkit-text-fill-color:white;text-shadow:0 0 2px white} .bili-video-page button {color:white} .bili-video-page .ds-panel-kicker {color:white}' });
     async function checkHeader(expected) {

@@ -41,10 +41,10 @@
 
   // 各模式的文案：面板标题 / 流式提示 / 末步（DeepSeek）标签。needsComments 表示该模式还需读取评论。
   const MODES = {
-    summary:   { title: "视频笔记",   gen: "AI 生成中…", step: "AI 生成总结" },
-    translate: { title: "原文翻译",   gen: "AI 翻译中…", step: "AI 翻译原文" },
-    critique:  { title: "批判性分析", gen: "AI 分析中…", step: "AI 批判分析" },
-    comments:  { title: "评论印证",   gen: "AI 分析中…", step: "AI 结合评论分析", needsComments: true }
+    summary:   { title: "总结视频",   gen: "AI 生成中…", step: "AI 生成总结" },
+    translate: { title: "翻译字幕",   gen: "AI 翻译中…", step: "AI 翻译字幕" },
+    critique:  { title: "分析观点", gen: "AI 分析中…", step: "AI 批判分析" },
+    comments:  { title: "结合评论分析",   gen: "AI 分析中…", step: "AI 结合评论分析", needsComments: true }
   };
 
   // ---------- 注入按钮 ----------
@@ -74,7 +74,7 @@
     const caption = document.createElement("div"); caption.className = "ds-menu-caption";
     caption.textContent = adapter.sourceType === "page" ? "当前页面 · 正文阅读" : "当前视频 · 字幕学习";
     menu.append(caption);
-    const actions = adapter.sourceType === "page" ? [["理解页面", "summary"], ["页面出题", "quiz"]] : [["视频笔记", "summary"], ["翻译原文", "translate"], ["批判性分析", "critique"], ["评论印证", "comments"], ["视频练习", "quiz"]];
+    const actions = adapter.sourceType === "page" ? [["总结网页", "summary"], ["出题自测", "quiz"]] : [["总结视频", "summary"], ["翻译字幕", "translate"], ["分析观点", "critique"], ["结合评论分析", "comments"], ["出题自测", "quiz"]];
     for (const [label, mode] of actions) menu.append(mkBtn(label, () => { setMenu(false); onAction(mode); }));
     let positionFrame = 0;
     const events = new AbortController();
@@ -193,7 +193,7 @@
     panel.id = "ds-result-panel";
     panel.innerHTML = `
       <div class="ds-panel-head">
-        <div><span class="ds-panel-kicker">AI TOOLBOX / 阅读与学习</span><span class="ds-panel-title">视频笔记</span></div>
+        <div><span class="ds-panel-kicker">AI TOOLBOX / 阅读与学习</span><span class="ds-panel-title">总结视频</span></div>
         <div class="ds-panel-actions">
           <button class="ds-icon-btn" id="ds-copy">复制</button>
           <button class="ds-icon-btn" id="ds-download">下载</button>
@@ -413,10 +413,10 @@
     });
   }
 
-  // ---------- 执行（mode: summary 总结 / translate 翻译 / critique 批判 / comments 评论印证） ----------
+  // ---------- 执行（mode: summary 总结 / translate 翻译 / critique 批判 / comments 结合评论分析） ----------
   let inFlight = false;
   let transcriptCache = null; // { videoId, transcript, meta }，各按钮共用，避免重复抓字幕被限流
-  let commentsCache = null;   // { videoId, comments }，评论印证按钮复用
+  let commentsCache = null;   // { videoId, comments }，结合评论分析按钮复用
   async function onAction(mode, customTool = null) {
     // 执行中禁止重复点击：连点会叠加抓取请求，容易把自己打进 B 站风控
     if (inFlight || window.DSPractice.busy) { openPanel(); return; }
@@ -424,7 +424,7 @@
     if (mode === "quiz") {
       const sourceAdapter = adapter;
       const sourceVideoId = sourceAdapter.getVideoId();
-      openPanel(); hideChat(); setPanelTitle(adapter.sourceType === "page" ? "页面出题" : "视频练习");
+      openPanel(); hideChat(); setPanelTitle(adapter.sourceType === "page" ? "出题自测" : "出题自测");
       panel.querySelectorAll("#ds-copy, #ds-download").forEach(b => b.hidden = true);
       window.DSPractice.mount(body(), {
         videoId: sourceVideoId, url: location.href, sourceType: sourceAdapter.sourceType || "video",
@@ -432,10 +432,10 @@
           const videoId = sourceAdapter.getVideoId();
           if (adapter !== sourceAdapter) throw new Error("页面已切换，请重新打开出题功能。");
           if (!videoId) throw new Error("请在视频页面使用练习功能。");
-          if (videoId !== sourceVideoId) throw new Error("视频已切换，请重新打开视频练习。");
+          if (videoId !== sourceVideoId) throw new Error("视频已切换，请重新打开出题自测。");
           if (sourceAdapter.cacheTranscript !== false && transcriptCache?.videoId === videoId) return transcriptCache;
           const data = await sourceAdapter.getTranscript(videoId, () => {});
-          if (adapter !== sourceAdapter || sourceAdapter.getVideoId() !== sourceVideoId) throw new Error("视频已切换，请重新打开视频练习。");
+          if (adapter !== sourceAdapter || sourceAdapter.getVideoId() !== sourceVideoId) throw new Error("视频已切换，请重新打开出题自测。");
           if (!data.transcript?.trim()) throw new Error("当前内容没有可用的文字资料。");
           transcriptCache = { ...data, videoId };
           return data;
@@ -446,7 +446,7 @@
     const videoId = adapter.getVideoId();
     if (!videoId) return;
     inFlight = true;
-    const L = mode === "custom" ? { title: customTool.name, gen: "AI 正在按你的提示词生成…", step: "生成自定义内容" } : adapter.sourceType === "page" ? { title: "理解页面", gen: "AI 正在整理页面脉络…", step: "AI 理解与总结" } : MODES[mode] || MODES.summary;
+    const L = mode === "custom" ? { title: customTool.name, gen: "AI 正在按你的提示词生成…", step: "生成自定义内容" } : adapter.sourceType === "page" ? { title: "总结网页", gen: "AI 正在整理页面脉络…", step: "AI 理解与总结" } : MODES[mode] || MODES.summary;
     const wantComments = !!L.needsComments;
     lastSummary = "";
     metaLine = "";
