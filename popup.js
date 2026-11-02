@@ -21,7 +21,7 @@ function renderTools(current, activeMatch) {
     card.className = "card";
     card.innerHTML = `
       <div class="card-head">
-        <span>${tool.icon}</span><span>${tool.name}</span>
+        <span class="tool-index">${tool.icon}</span><span>${tool.name}</span>
         <span class="badge ${active ? "on" : "off"}">${active ? "当前页可用" : "在指定页生效"}</span>
       </div>
       <div class="card-desc">${tool.desc}</div>
@@ -75,7 +75,10 @@ function save() {
     showStatus("请填写 DeepSeek API Key", false);
     return;
   }
-  chrome.storage.sync.set(data, () => showStatus("✓ 已保存"));
+  chrome.storage.sync.set(data, () => {
+    if (chrome.runtime.lastError) showStatus("保存失败：" + chrome.runtime.lastError.message, false);
+    else showStatus("设置已保存");
+  });
 }
 
 async function init() {

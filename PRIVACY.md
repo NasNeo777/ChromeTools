@@ -101,3 +101,7 @@ If this policy changes, we will update this document and the "Effective Date" at
 ### Contact
 
 For any questions about this privacy policy, contact: **bigbugbbb@gmail.com**
+
+## 视频练习与自动批改（1.5.0）
+
+使用「视频练习」时，视频字幕和所选难度、题型、题数会发送至 DeepSeek 生成试卷。提交批改时，字幕、题目、参考答案、评分要点及需要 AI 批改的填空/问答作答会发送至 DeepSeek；选择题在浏览器中判分，未作答题目本地记零。试卷和作答保留在当前页面内存，不写入扩展同步存储。导出的试卷与答案保存至用户主动选择的本地下载位置。

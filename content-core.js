@@ -37,10 +37,10 @@
 
   // 各模式的文案：面板标题 / 流式提示 / 末步（DeepSeek）标签。needsComments 表示该模式还需读取评论。
   const MODES = {
-    summary:   { title: "📄 视频总结",   gen: "DeepSeek 生成中…", step: "DeepSeek 生成总结" },
-    translate: { title: "🌐 原文翻译",   gen: "DeepSeek 翻译中…", step: "DeepSeek 翻译原文" },
-    critique:  { title: "🔍 批判性分析", gen: "DeepSeek 分析中…", step: "DeepSeek 批判分析" },
-    comments:  { title: "💬 评论印证",   gen: "DeepSeek 分析中…", step: "DeepSeek 结合评论分析", needsComments: true }
+    summary:   { title: "视频笔记",   gen: "DeepSeek 生成中…", step: "DeepSeek 生成总结" },
+    translate: { title: "原文翻译",   gen: "DeepSeek 翻译中…", step: "DeepSeek 翻译原文" },
+    critique:  { title: "批判性分析", gen: "DeepSeek 分析中…", step: "DeepSeek 批判分析" },
+    comments:  { title: "评论印证",   gen: "DeepSeek 分析中…", step: "DeepSeek 结合评论分析", needsComments: true }
   };
 
   // ---------- 注入按钮 ----------
@@ -59,10 +59,11 @@
     bar.id = "ds-tool-bar";
     bar.className = "ds-tool-bar";
     bar.append(
-      mkBtn("📝 总结为中文文档", () => onAction("summary")),
-      mkBtn("🌐 翻译原文", () => onAction("translate")),
-      mkBtn("🔍 批判性分析", () => onAction("critique")),
-      mkBtn("💬 评论印证", () => onAction("comments"))
+      mkBtn("视频笔记", () => onAction("summary")),
+      mkBtn("翻译原文", () => onAction("translate")),
+      mkBtn("批判性分析", () => onAction("critique")),
+      mkBtn("评论印证", () => onAction("comments")),
+      mkBtn("视频练习", () => onAction("quiz"))
     );
 
     let placed = false;
@@ -77,11 +78,11 @@
     panel.className = "ds-panel";
     panel.innerHTML = `
       <div class="ds-panel-head">
-        <span class="ds-panel-title">📄 视频总结</span>
+        <div><span class="ds-panel-kicker">DEEPSEEK / 视频学习</span><span class="ds-panel-title">视频笔记</span></div>
         <div class="ds-panel-actions">
           <button class="ds-icon-btn" id="ds-copy">复制</button>
           <button class="ds-icon-btn" id="ds-download">下载</button>
-          <button class="ds-icon-btn" id="ds-close">✕</button>
+          <button class="ds-icon-btn" id="ds-close" aria-label="关闭面板">×</button>
         </div>
       </div>
       <div class="ds-panel-body" id="ds-body"></div>
@@ -172,7 +173,7 @@
         chatBusy = false;
         port.disconnect();
       } else if (m.type === "error") {
-        out.innerHTML = `<span class="ds-error">⚠ ${escapeHtml(m.error)}</span>`;
+        out.innerHTML = `<span class="ds-error">${escapeHtml(m.error)}</span>`;
         chatBusy = false;
         port.disconnect();
       }
@@ -255,7 +256,7 @@
   }
 
   function metaHtml(meta) {
-    return `<div class="ds-meta">🎬 ${escapeHtml(meta.title)}${meta.author ? " · " + escapeHtml(meta.author) : ""}</div>`;
+    return `<div class="ds-meta">${escapeHtml(meta.title)}${meta.author ? " · " + escapeHtml(meta.author) : ""}</div>`;
   }
   function escapeHtml(s) {
     return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -295,7 +296,28 @@
   let commentsCache = null;   // { videoId, comments }，评论印证按钮复用
   async function onAction(mode) {
     // 执行中禁止重复点击：连点会叠加抓取请求，容易把自己打进 B 站风控
-    if (inFlight) { openPanel(); return; }
+    if (inFlight || window.DSPractice.busy) { openPanel(); return; }
+    panel?.querySelectorAll("#ds-copy, #ds-download").forEach(b => b.hidden = mode === "quiz");
+    if (mode === "quiz") {
+      const sourceVideoId = adapter.getVideoId();
+      openPanel(); hideChat(); setPanelTitle("视频练习");
+      panel.querySelectorAll("#ds-copy, #ds-download").forEach(b => b.hidden = true);
+      window.DSPractice.mount(body(), {
+        videoId: sourceVideoId, url: location.href,
+        load: async () => {
+          const videoId = adapter.getVideoId();
+          if (!videoId) throw new Error("请在视频页面使用练习功能。");
+          if (videoId !== sourceVideoId) throw new Error("视频已切换，请重新打开视频练习。");
+          if (transcriptCache?.videoId === videoId) return transcriptCache;
+          const data = await adapter.getTranscript(videoId, () => {});
+          if (adapter.getVideoId() !== sourceVideoId) throw new Error("视频已切换，请重新打开视频练习。");
+          if (!data.transcript?.trim()) throw new Error("这个视频没有可用字幕。");
+          transcriptCache = { ...data, videoId };
+          return data;
+        }
+      });
+      return;
+    }
     const videoId = adapter.getVideoId();
     if (!videoId) return;
     inFlight = true;
@@ -311,7 +333,7 @@
     renderProgress(1, "正在启动…");
 
     const fail = (msg) => {
-      body().innerHTML = `<div class="ds-error">⚠ ${escapeHtml(msg)}</div>`;
+      body().innerHTML = `<div class="ds-error">${escapeHtml(msg)}</div>`;
       inFlight = false;
     };
 
@@ -377,7 +399,7 @@
         inFlight = false;
         port.disconnect();
       } else if (m.type === "error") {
-        body().innerHTML = `<div class="ds-error">⚠ ${escapeHtml(m.error)}</div>`;
+        body().innerHTML = `<div class="ds-error">${escapeHtml(m.error)}</div>`;
         inFlight = false;
         port.disconnect();
       }

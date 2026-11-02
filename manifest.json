@@ -1,9 +1,12 @@
 {
   "manifest_version": 3,
   "name": "DeepSeek 工具箱",
-  "version": "1.4.0",
-  "description": "由 DeepSeek 驱动的浏览器小工具集合。当前工具：YouTube / 哔哩哔哩 视频总结（抓取字幕一键生成中文文档）。",
-  "permissions": ["storage", "activeTab"],
+  "version": "1.5.0",
+  "description": "YouTube / 哔哩哔哩视频总结、翻译、分析与字幕出题，支持自动批改和导出试卷及答案。",
+  "permissions": [
+    "storage",
+    "activeTab"
+  ],
   "host_permissions": [
     "https://www.youtube.com/*",
     "https://youtubei.googleapis.com/*",
@@ -16,21 +19,39 @@
   },
   "content_scripts": [
     {
-      "matches": ["https://www.youtube.com/watch*"],
-      "js": ["content-core.js", "content-youtube.js"],
-      "css": ["content.css"],
+      "matches": [
+        "https://www.youtube.com/watch*"
+      ],
+      "js": [
+        "quiz-shared.js",
+        "quiz-content.js",
+        "content-core.js",
+        "content-youtube.js"
+      ],
+      "css": [
+        "content.css"
+      ],
       "run_at": "document_idle"
     },
     {
-      "matches": ["https://www.bilibili.com/video/*"],
-      "js": ["content-core.js", "content-bilibili.js"],
-      "css": ["content.css"],
+      "matches": [
+        "https://www.bilibili.com/video/*"
+      ],
+      "js": [
+        "quiz-shared.js",
+        "quiz-content.js",
+        "content-core.js",
+        "content-bilibili.js"
+      ],
+      "css": [
+        "content.css"
+      ],
       "run_at": "document_idle"
     }
   ],
   "action": {
     "default_popup": "popup.html",
-    "default_title": "YouTube 总结设置",
+    "default_title": "DeepSeek 视频学习工具",
     "default_icon": {
       "16": "icons/icon16.png",
       "48": "icons/icon48.png",

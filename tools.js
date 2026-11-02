@@ -5,9 +5,9 @@
 window.DS_TOOLS = [
   {
     id: "yt-summary",
-    name: "YouTube 视频总结 / 翻译",
-    icon: "📝",
-    desc: "在视频页可「总结为中文文档」「翻译原文」「批判性分析」（核查是否有理/有无依据/是否话术）或「评论印证」（结合热评判断评论能否佐证视频，并识别粉丝附和与刷屏控评），可复制 / 下载。",
+    name: "YouTube 视频学习",
+    icon: "01",
+    desc: "笔记、翻译、批判性分析与评论印证。新增视频练习：选择、问答、填空，自动批改并导出试卷和答案。",
     // 该工具在哪些页面生效（用于在弹窗里提示）
     match: "https://www.youtube.com/watch*",
     // 工具私有设置项 -> 渲染成下拉框，键名即存储到 chrome.storage.sync 的字段
@@ -36,9 +36,9 @@ window.DS_TOOLS = [
   },
   {
     id: "bili-summary",
-    name: "哔哩哔哩视频总结 / 翻译",
-    icon: "📺",
-    desc: "在 B 站视频页可「总结为中文文档」「翻译原文」「批判性分析」或「评论印证」。复用上方的总结风格 / 输出语言设置。需登录 B 站且视频有字幕（含 AI 字幕）。",
+    name: "哔哩哔哩视频学习",
+    icon: "02",
+    desc: "同样支持笔记、翻译、分析和视频练习。共用模型与输出设置；请登录 B 站，并选择有字幕的视频。",
     match: "https://www.bilibili.com/video/*"
     // 不重复声明 style / language：与 YouTube 工具共用同一组存储字段
   }
