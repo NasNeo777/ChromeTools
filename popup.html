@@ -14,7 +14,7 @@
 
   <div class="section">
     <!-- 共享配置 -->
-    <div class="card">
+    <div class="card" id="api-settings">
       <div class="global-title">连接你的 AI</div>
       <label for="provider">AI 服务商</label>
       <select id="provider"></select>
@@ -56,9 +56,11 @@
       <div class="hint">独立保存在本机，最多 20 个工具；使用当前选中的 AI 服务商。</div>
     </section>
 
+  </div>
+  <footer class="popup-footer">
     <button class="save" id="save">保存设置</button>
     <div class="status" id="status" role="status" aria-live="polite"></div>
-  </div>
+  </footer>
 
   <script src="custom-tools.js"></script>
   <script src="custom-tools-editor.js"></script>
