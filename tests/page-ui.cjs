@@ -28,7 +28,7 @@ const path=require('node:path');const fs=require('node:fs');
   await page.evaluate(()=>{const p=document.createElement('p');p.textContent='更新后的正文内容：每次总结都会重新读取。';document.querySelector('article').append(p);});
   await launcher.click();await page.getByRole('button',{name:'总结网页',exact:true}).click();await page.waitForFunction(()=>requests.length===2);assert.ok((await page.evaluate(()=>requests.at(-1).transcript)).includes('更新后的正文内容'));
   await page.waitForSelector('.ds-doc');await launcher.click();await page.getByRole('button',{name:'出题自测',exact:true}).click();
-  await page.getByText('为这篇内容，出一份试卷。',{exact:true}).waitFor();await page.selectOption('#ds-quiz-count','3');await page.click('#ds-quiz-generate');await page.waitForSelector('.ds-question');
+  await page.getByRole('heading',{name:'读完了，测一测',exact:true}).waitFor();await page.selectOption('#ds-quiz-count','3');await page.click('#ds-quiz-generate');await page.waitForSelector('.ds-question');
   request=await page.evaluate(()=>requests.at(-1));assert.equal(request.type,'QUIZ_GENERATE');assert.equal(request.meta.sourceType,'page');assert.equal(await page.locator('.ds-question').count(),3);
   await page.locator('#ds-close').click();await page.evaluate(()=>document.querySelectorAll('nav,form,footer').forEach(el=>el.style.visibility='hidden'));await launcher.click();await page.screenshot({path:'screenshots/toolbox/page-menu.png',animations:'disabled'});
   await page.setViewportSize({width:390,height:844});await page.waitForFunction(()=>{const r=document.querySelector('#ds-function-menu').getBoundingClientRect();return r.left>=0&&r.right<=innerWidth;});assert.equal(await page.locator('#ds-function-menu').evaluate(el=>{const r=el.getBoundingClientRect();return r.left>=0&&r.right<=innerWidth;}),true);

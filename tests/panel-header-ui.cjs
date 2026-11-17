@@ -19,6 +19,7 @@ const fs = require('node:fs');
     // Loaded AFTER extension styles to emulate late-injected site/player CSS.
     await page.addStyleTag({ content: '.bili-video-page span {color:white} .bili-video-page .ds-panel-title {color:white;-webkit-text-fill-color:white;text-shadow:0 0 2px white} .bili-video-page button {color:white} .bili-video-page .ds-panel-kicker {color:white}' });
     async function checkHeader(expected) {
+      await page.waitForFunction(expected => getComputedStyle(document.querySelector(".ds-panel-title")).color === expected, expected);
       const values = await page.locator('.ds-panel-title').evaluate(el => {
         const css = getComputedStyle(el), header = getComputedStyle(el.closest('.ds-panel-head')), panel = getComputedStyle(el.closest('.ds-panel'));
         const rgb = s => s.match(/[\d.]+/g).map(Number);

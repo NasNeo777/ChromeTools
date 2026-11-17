@@ -53,3 +53,20 @@ test('custom follow-up retains task snapshot without requiring tool to still exi
  const r=await run('claude',native,{type:'CHAT',mode:'custom',customTool,transcript:'原文',meta:{sourceType:'page'},history:[{role:'assistant',content:'三步清单'},{role:'user',content:'展开第一步'}]});
  assert.equal(r.output.at(-1).type,'done');assert.ok(r.request.body.system.includes(customTool.prompt));assert.equal(r.request.body.messages.at(-1).content,'展开第一步');
 });
+
+// Selection tasks must keep their own prompt even on ordinary pages and video sites.
+test('selection summary and follow-up use only the selected excerpt with optional unverified attribution', async()=>{
+ for (const sourceType of ['page','video','selection']) {
+  const {request,output}=await run('deepseek',openai,{type:'START',mode:'selection',transcript:'To be, or not to be.',meta:{sourceType,truncated:true}});
+  assert.equal(output.at(-1).type,'done');
+  assert.match(request.body.messages[0].content,/划词阅读助手/);
+  assert.match(request.body.messages[0].content,/不知道则省略/);
+  assert.match(request.body.messages[0].content,/未经检索核验/);
+  assert.deepEqual(JSON.parse(request.body.messages[1].content),{content:'To be, or not to be.',truncated:true});
+ }
+ const {request}=await run('deepseek',openai,{type:'CHAT',mode:'selection',transcript:'original selected excerpt',meta:{sourceType:'selection'},history:[{role:'assistant',content:'先前总结'},{role:'user',content:'解释一下'}]});
+ assert.match(request.body.messages[0].content,/最新追问/);
+ assert.match(request.body.messages[1].content,/选中文字/);
+ assert.match(request.body.messages[1].content,/original selected excerpt/);
+ assert.equal(request.body.messages.at(-1).content,'解释一下');
+});

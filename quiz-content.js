@@ -5,6 +5,28 @@
   let root, context, quiz = null, answers = [], results = null, busy = false, error = '';
   let videoId = null;
   let config = { difficulty: 'medium', count: 6, types: ['choice', 'short', 'blank'] };
+  const counts = [3, 4, 5, 6, 8, 10, 12];
+  let configRevision = 0, preferenceWrites = Promise.resolve();
+  // Read once per document; a slow read must never overwrite a user's new choice.
+  const preferencesReady = (async () => {
+    try {
+      const stored = await chrome.storage?.local?.get({ quizPreferences: null });
+      if (!stored?.quizPreferences || configRevision) return;
+      const saved = Q.config(stored.quizPreferences);
+      if (!counts.includes(saved.count)) return;
+      config = saved;
+      if (root?.isConnected && !quiz && !busy) render();
+    } catch { /* Missing/corrupt preferences leave the defaults usable. */ }
+  })();
+  function rememberConfig() {
+    configRevision++;
+    let snapshot;
+    try { snapshot = Q.config(config); } catch { return; } // Do not persist an empty type selection.
+    preferenceWrites = preferenceWrites.catch(() => {}).then(async () => {
+      await preferencesReady;
+      await chrome.storage?.local?.set({ quizPreferences: snapshot });
+    }).catch(() => {});
+  }
   const difficultyNames = { easy: '简单', medium: '中等', hard: '困难' };
   function button(label, id, primary = false) { return `<button type="button" class="ds-practice-btn${primary ? ' ds-primary' : ''}" id="${id}">${label}</button>`; }
   function mount(node, ctx) {
@@ -19,9 +41,9 @@
     root.innerHTML = `<div class="ds-practice"><div class="ds-eyebrow">${context.sourceType === 'page' ? '网页 · 出题自测' : '视频 · 出题自测'}</div><div class="ds-practice-intro"><h2>${quiz ? results ? '查看自测结果' : '检验你的理解' : context.sourceType === 'page' ? '读完了，测一测' : '看完了，测一测'}</h2><p>${quiz ? e(context.meta?.title || '基于当前原文') : context.sourceType === 'page' ? '根据这篇网页出题，看看哪些知识已经掌握。' : '根据视频字幕出题，看看哪些知识已经掌握。'}</p></div><ol class="ds-practice-stages" aria-label="自测进度"><li class="${!quiz ? 'current' : ''}">01 设置</li><li class="${quiz && !results ? 'current' : ''}">02 作答</li><li class="${results ? 'current' : ''}">03 批改</li></ol><div class="ds-practice-error" role="alert" ${error ? '' : 'hidden'}>${e(error)}</div>${busy ? `<div class="ds-practice-loading" role="status" aria-live="polite"><strong>${quiz ? '正在逐题批改' : '正在生成题目'}</strong><p id="ds-quiz-progress">${quiz ? '按参考答案与评分要点评估，请稍候…' : context.sourceType === 'page' ? '读取正文并整理知识点，请稍候…' : '读取字幕并整理知识点，请稍候…'}</p><div class="ds-skeleton"></div><div class="ds-skeleton short"></div><div class="ds-skeleton"></div></div>` : quiz ? paperView() : setupView()}</div>`;
     if (busy) return;
     if (!quiz) {
-      root.querySelectorAll('[data-difficulty]').forEach(b => b.addEventListener('click', () => { config.difficulty = b.dataset.difficulty; render(); }));
-      root.querySelectorAll('[data-type]').forEach(b => b.addEventListener('change', () => { config.types = [...root.querySelectorAll('[data-type]:checked')].map(b => b.dataset.type); }));
-      on('ds-quiz-count', 'change', ev => { config.count = Number(ev.target.value); });
+      root.querySelectorAll('[data-difficulty]').forEach(b => b.addEventListener('click', () => { config.difficulty = b.dataset.difficulty; rememberConfig(); render(); }));
+      root.querySelectorAll('[data-type]').forEach(b => b.addEventListener('change', () => { config.types = [...root.querySelectorAll('[data-type]:checked')].map(b => b.dataset.type); rememberConfig(); }));
+      on('ds-quiz-count', 'change', ev => { config.count = Number(ev.target.value); rememberConfig(); });
       on('ds-quiz-generate', 'click', generate);
     } else {
       root.querySelectorAll('[data-answer]').forEach(input => input.addEventListener('input', () => {
@@ -37,7 +59,7 @@
     }
   }
   function setupView() {
-    return `<fieldset class="ds-fieldset"><legend>题目难度</legend><div class="ds-difficulty">${Object.entries(Q.difficulties).map(([key, desc]) => `<button type="button" data-difficulty="${key}" aria-pressed="${config.difficulty === key}" class="${config.difficulty === key ? 'selected' : ''}"><strong>${difficultyNames[key]}</strong><span>${desc}</span></button>`).join('')}</div></fieldset><fieldset class="ds-fieldset"><legend>题型 <span>可多选</span></legend><div class="ds-types">${Object.entries(Q.types).map(([key, name]) => `<label><input type="checkbox" data-type="${key}" ${config.types.includes(key) ? 'checked' : ''}>${name}</label>`).join('')}</div></fieldset><div class="ds-count-row"><div><label for="ds-quiz-count">题目数量</label><p>每题 10 分，覆盖所选题型</p></div><select id="ds-quiz-count">${[3,4,5,6,8,10,12].map(n => `<option value="${n}" ${config.count === n ? 'selected' : ''}>${n} 题</option>`).join('')}</select></div>${button('开始出题', 'ds-quiz-generate', true)}<p class="ds-practice-note">AI 将根据原文出题，提交答案后提供评分与解析。</p>`;
+    return `<fieldset class="ds-fieldset"><legend>题目难度</legend><div class="ds-difficulty">${Object.entries(Q.difficulties).map(([key, desc]) => `<button type="button" data-difficulty="${key}" aria-pressed="${config.difficulty === key}" class="${config.difficulty === key ? 'selected' : ''}"><strong>${difficultyNames[key]}</strong><span>${desc}</span></button>`).join('')}</div></fieldset><fieldset class="ds-fieldset"><legend>题型 <span>可多选</span></legend><div class="ds-types">${Object.entries(Q.types).map(([key, name]) => `<label><input type="checkbox" data-type="${key}" ${config.types.includes(key) ? 'checked' : ''}>${name}</label>`).join('')}</div></fieldset><div class="ds-count-row"><div><label for="ds-quiz-count">题目数量</label><p>每题 10 分，覆盖所选题型</p></div><select id="ds-quiz-count">${counts.map(n => `<option value="${n}" ${config.count === n ? 'selected' : ''}>${n} 题</option>`).join('')}</select></div>${button('开始出题', 'ds-quiz-generate', true)}<p class="ds-practice-note">AI 将根据原文出题，提交答案后提供评分与解析。</p>`;
   }
   function paperView() {
     const total = results ? Math.round(results.reduce((sum, r) => sum + r.score, 0) * 10) / 10 : 0;
@@ -47,6 +69,9 @@
     }).join('')}<div class="ds-practice-footer">${results ? button('修改答案，重新作答', 'ds-quiz-retry', true) : button('提交答案', 'ds-quiz-submit', true)}${button('重新设置', 'ds-quiz-reset')}</div>${!results ? '<p class="ds-practice-note">未作答题目按 0 分计。提交后显示解析；导出答案会包含参考解答。</p>' : ''}`;
   }
   async function generate() {
+    if (busy) return;
+    await preferencesReady;
+    if (busy) return;
     try { Q.config(config); } catch (err) { error = err.message; render(); return; }
     busy = true; error = ''; render();
     try {

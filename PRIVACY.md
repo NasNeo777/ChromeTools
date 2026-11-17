@@ -2,7 +2,7 @@
 
 **扩展名称：AI工具箱（原 DeepSeek 工具箱）**
 
-**适用版本：1.7.0 · 更新日期：2026-11-02**
+**适用版本：1.8.0 · 更新日期：2026-11-17**
 
 [中文版](#中文版) · [English](#english)
 
@@ -28,6 +28,8 @@ AI 请求由您的浏览器直接发送到您选择并配置的接口，不经�
 | 复制和导出内容 | 您主动复制的生成结果，或主动下载的结果文档、试卷和答案，用于在本机继续使用 |
 
 选择题按参考答案在浏览器中判分，未作答题目本地记零。需要 AI 评估的填空和问答会将对应题目、参考答案、评分要点、作答及来源文字发送至所选服务商。如果全部题目均可本地判分，该次批改不会发起 AI 请求。
+
+划词总结由您右键选择“AI 总结”触发，仅把选中文字（最多 48,000 字符）发送给当前 AI 服务商，不额外读取整页正文或视频字幕。选中文字与结果保存在当前页面内存中，追问会附带该选段和相关对话。出处线索来自模型已有知识，未联网检索核验。
 
 普通网页的提取会过滤表单控件、表单区域、可编辑区域、隐藏元素，以及部分导航等非正文区域；不读取跨域 iframe、视频画面或未加载的链接内容。正文过长时会截断并标注范围。过滤并不意味着可读正文不含个人信息：页面上展示的姓名、联系信息、私人通信、业务资料或敏感网址仍可能属于被提取的内容。请在运行功能前确认您有权处理并发送这些资料。
 
@@ -56,7 +58,7 @@ AI 请求由您的浏览器直接发送到您选择并配置的接口，不经�
 | 存放位置 | 保存的数据 | 保留方式 |
 | --- | --- | --- |
 | `chrome.storage.sync` | 各家 API Key、模型与接口地址、所选服务商、总结风格、语言，以及旧 DeepSeek 配置的兼容字段 | 跨浏览器重启保留；启用 Chrome 同步时可能同步到同一账号的其他设备 |
-| `chrome.storage.local` | 自定义工具的名称、提示词、适用范围和启用状态 | 保存在当前浏览器配置中，不由本扩展自动跨设备同步 |
+| `chrome.storage.local` | 自定义工具的名称、提示词、适用范围和启用状态，以及工具箱按钮位置、上次有效的出题设置（难度、题型和题数） | 保存在当前浏览器配置中，不由本扩展自动跨设备同步 |
 | 当前页面内存 | 已读取的正文、字幕、评论缓存，生成结果、对话、试卷和作答 | 不自动写入持久化学习记录；通常随完整刷新或关闭页面释放，站内不重新加载的导航可能暂留上一次结果 |
 | 系统剪贴板与下载文件 | 您主动复制或导出的内容 | 由操作系统、浏览器及您自行管理，不会因关闭或卸载扩展而自动删除 |
 
@@ -74,7 +76,7 @@ API Key 使用浏览器扩展存储保存，本扩展未对其实施额外的应
 
 ### 6. 权限与安全措施
 
-当前版本声明 `storage`、`activeTab`，以及 HTTP/HTTPS 主机访问范围。`storage` 用于配置和自定义工具；活动页信息用于在设置面板提示工具可用性；网站访问用于展示入口、按需提取正文、访问视频平台接口，以及请求您配置的 AI 服务。
+当前版本声明 `storage`、`activeTab`、`contextMenus`，以及 HTTP/HTTPS 主机访问范围。`storage` 用于配置、自定义工具和按钮位置；右键菜单权限用于提供划词总结入口；活动页信息用于在设置面板提示工具可用性；网站访问用于展示入口、按需提取正文、访问视频平台接口，以及请求您配置的 AI 服务。
 
 AI 接口地址必须使用 HTTPS，AI 请求不跟随重定向。所有执行的扩展脚本均随安装包提供；自定义提示词属于文本配置，不是可执行插件。模型输出按允许的文档标签和属性展示，不执行其中的脚本或加载其中的远程资源。这些措施不能保证设备、浏览器或所配置的第三方服务绝对安全。
 
@@ -109,6 +111,8 @@ When loaded, content scripts identify the page type and display a launcher. The 
 
 Multiple-choice answers and unanswered questions are scored locally. When AI grading is needed, the relevant short-answer or fill-in questions, reference answers, rubrics, submitted answers and source text are sent to the selected provider. A grading submission handled entirely by local scoring makes no AI request.
 
+Selection summaries run only when you choose AI Summary from the context menu. Only the selected text (up to 48,000 characters) is sent to the selected AI provider, without additionally extracting the full page or video transcript. The excerpt and results remain in page memory; follow-up requests include the excerpt and relevant conversation. Optional attribution is based on model knowledge without online verification.
+
 Page extraction filters out form controls, form areas, editable regions, hidden elements and some navigation content. It does not read cross-origin frames, video pixels or unloaded links. Long source text can be truncated with a notice. Filtering does not guarantee that extracted text contains no personal information: visible names, contact details, private communications, business information or sensitive URLs may be included. Confirm that you are entitled to process and transmit the material before running a feature.
 
 The extension does not use the browsing history API to build a visit log, read password input values through its features, or use data for advertising profiles, sale or purposes unrelated to the requested features.
@@ -128,7 +132,7 @@ Third-party processing, retention, account access, service region and charges de
 | Location | Data and retention |
 | --- | --- |
 | `chrome.storage.sync` | Provider keys, models, endpoints, selected provider, preferences and legacy DeepSeek compatibility fields persist across restarts and may sync to other devices on the same Chrome account |
-| `chrome.storage.local` | Custom tool names, prompts, scopes and enabled states persist in the current browser profile without automatic cross-device synchronization by this extension |
+| `chrome.storage.local` | Custom tool names, prompts, scopes, enabled states, launcher position and last valid quiz settings (difficulty, types and count) persist in the current browser profile without automatic cross-device synchronization by this extension |
 | Page memory | Extracted content, caches, results, chats, quizzes and answers are not automatically stored as persistent learning records; they generally remain until a full reload or tab closure, and may persist during navigation that does not reload the document |
 | Clipboard and downloads | Copied content and exported files are controlled by your operating system, browser and your own actions, and are not automatically deleted when the extension is closed or uninstalled |
 
@@ -146,7 +150,7 @@ Uninstalling, deleting settings or closing a tab does not revoke a provider-issu
 
 ### 6. Permissions and security measures
 
-Version 1.7.0 declares `storage`, `activeTab` and HTTP/HTTPS host access. Storage supports settings and custom tools; active-page information supports tool availability indicators; website access supports the launcher, requested text extraction, video platform requests and calls to configured AI services.
+Version 1.8.0 declares `storage`, `activeTab`, `contextMenus` and HTTP/HTTPS host access. Storage supports settings, custom tools and launcher position; context menu access provides the selection summary action; active-page information supports tool availability indicators; website access supports the launcher, requested text extraction, video platform requests and calls to configured AI services.
 
 AI endpoints must use HTTPS and AI requests do not follow redirects. Executable extension scripts are packaged with the extension. Custom prompts are text settings, not executable plugins. Generated documents are rendered through an allowed set of tags and attributes without executing embedded scripts or loading embedded remote resources. These measures do not guarantee absolute security of your device, browser or third-party endpoint.
 

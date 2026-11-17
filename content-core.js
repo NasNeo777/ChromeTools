@@ -47,6 +47,63 @@
     comments:  { title: "结合评论分析",   gen: "AI 分析中…", step: "AI 结合评论分析", needsComments: true }
   };
 
+  // Use page appearance when it is explicit; otherwise follow the OS preference.
+  const systemTheme = matchMedia("(prefers-color-scheme: dark)");
+  let currentTheme = "light", themeFrame = 0;
+  function detectTheme() {
+    for (const el of [document.documentElement, document.body]) {
+      if (!el) continue;
+      const named = el.getAttribute("data-theme") || el.getAttribute("data-color-mode") || el.getAttribute("theme");
+      if (/^(dark|light)$/i.test(named || "")) return named.toLowerCase();
+      if (el.hasAttribute("dark") || el.classList.contains("dark")) return "dark";
+      if (el.hasAttribute("light") || el.classList.contains("light")) return "light";
+    }
+    for (const el of [document.body, document.documentElement]) {
+      if (!el) continue;
+      const color = getComputedStyle(el).backgroundColor;
+      const rgb = color.match(/^rgba?\(([^)]+)\)/)?.[1].split(/[,\s/]+/).filter(Boolean).map(Number);
+      if (!rgb || rgb.length < 3 || (rgb[3] ?? 1) < 0.9) continue;
+      const brightness = rgb.slice(0, 3).reduce((sum, n, i) => sum + n * [0.2126, 0.7152, 0.0722][i], 0);
+      return brightness < 128 ? "dark" : "light";
+    }
+    const scheme = getComputedStyle(document.documentElement).colorScheme;
+    if (scheme === "dark" || scheme === "light") return scheme;
+    return systemTheme.matches ? "dark" : "light";
+  }
+  function syncTheme() {
+    currentTheme = detectTheme();
+    for (const el of document.querySelectorAll("#ds-tool-bar,#ds-function-menu,#ds-result-panel")) {
+      if (el.dataset.dsTheme !== currentTheme) el.dataset.dsTheme = currentTheme;
+    }
+  }
+  const themeObserver = new MutationObserver(() => {
+    if (!themeFrame) themeFrame = requestAnimationFrame(() => { themeFrame = 0; syncTheme(); });
+  });
+  for (const el of [document.documentElement, document.body]) if (el) themeObserver.observe(el, {
+    attributes: true, attributeFilter: ["class", "style", "dark", "light", "data-theme", "data-color-mode", "theme"]
+  });
+  systemTheme.addEventListener("change", syncTheme);
+  syncTheme();
+
+  // Static inline SVGs inherit currentColor and never depend on remote images.
+  function menuButton(label, mode, action) {
+    const paths = {
+      summary: '<path d="M8 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8l-5-5H8Z"/><path d="M14 3v6h6M7 13h10M7 17h7"/>',
+      translate: '<path d="M3 5h12M9 3v2M5 5c1 5 4 8 9 10M13 5c-1 5-4 8-9 10M14 21l4-10 4 10M16 17h4"/>',
+      critique: '<circle cx="10" cy="10" r="7"/><path d="m15 15 6 6M7 11l2-2 2 2 2-4"/>',
+      comments: '<path d="M21 11a8 8 0 0 1-8 8H7l-5 3 1-6a8 8 0 0 1-1-4V9a7 7 0 0 1 7-7h4a8 8 0 0 1 8 8Z"/><path d="M7 8h9M7 12h6"/>',
+      quiz: '<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V2h6v2M8 10l2 2 4-4M8 16h8"/>',
+      custom: '<path d="m12 3 2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5L12 3Z"/>'
+    };
+    const button = mkBtn("", action);
+    const icon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    for (const [name, value] of Object.entries({ viewBox: "0 0 24 24", width: "18", height: "18", fill: "none", stroke: "currentColor", "stroke-width": "1.7", "stroke-linecap": "round", "stroke-linejoin": "round", "aria-hidden": "true", focusable: "false" })) icon.setAttribute(name, value);
+    icon.classList.add("ds-menu-icon"); icon.innerHTML = paths[mode] || paths.custom;
+    const text = document.createElement("span"); text.className = "ds-menu-label"; text.textContent = label;
+    button.append(icon, text);
+    return button;
+  }
+
   // ---------- 注入按钮 ----------
   function mkBtn(text, onClick) {
     const b = document.createElement("button");
@@ -75,7 +132,7 @@
     caption.textContent = adapter.sourceType === "page" ? "当前页面 · 正文阅读" : "当前视频 · 字幕学习";
     menu.append(caption);
     const actions = adapter.sourceType === "page" ? [["总结网页", "summary"], ["出题自测", "quiz"]] : [["总结视频", "summary"], ["翻译字幕", "translate"], ["分析观点", "critique"], ["结合评论分析", "comments"], ["出题自测", "quiz"]];
-    for (const [label, mode] of actions) menu.append(mkBtn(label, () => { setMenu(false); onAction(mode); }));
+    for (const [label, mode] of actions) menu.append(menuButton(label, mode, () => { setMenu(false); onAction(mode); }));
     let positionFrame = 0;
     const events = new AbortController();
     const supportsPopover = typeof menu.showPopover === "function";
@@ -86,6 +143,7 @@
     if (!placed) { bar.classList.add("ds-floating"); document.body.appendChild(bar); }
     // The menu must escape the title/channel stacking contexts and overflow clipping.
     document.body.appendChild(menu);
+    syncTheme();
     const contains = target => target instanceof Node && (bar.contains(target) || menu.contains(target));
     function positionMenu() {
       if (menu.hidden) return;
@@ -112,6 +170,7 @@
     function setMenu(open) {
       if (open && (!launcher.isConnected || !menu.isConnected)) return;
       if (open) {
+        syncTheme();
         menu.hidden = false;
         if (supportsPopover && !menu.matches(":popover-open")) menu.showPopover();
         positionMenu();
@@ -154,7 +213,62 @@
       menu.remove();
       closeFunctionMenu = () => {}; repositionFunctionMenu = () => {}; disposeFunctionMenu = () => {};
     };
+    setupLauncherDrag(bar, launcher, events.signal, () => setMenu(false), schedulePosition);
     renderCustomMenu(menu);
+  }
+
+  function setupLauncherDrag(bar, launcher, signal, closeMenu, reposition) {
+    let drag = null, moved = false, position = null, touched = false;
+    const options = { signal };
+    launcher.title = "点击打开工具箱，拖动调整位置";
+    function place(x, y) {
+      bar.classList.add("ds-floating");
+      if (bar.parentElement !== document.body) document.body.appendChild(bar);
+      const maxX = Math.max(0, innerWidth - bar.offsetWidth - 8);
+      const maxY = Math.max(0, innerHeight - bar.offsetHeight - 8);
+      const left = Math.max(Math.min(8, maxX), Math.min(x, maxX));
+      const top = Math.max(Math.min(8, maxY), Math.min(y, maxY));
+      Object.assign(bar.style, { left: left + "px", top: top + "px", right: "auto", bottom: "auto" });
+      position = { x: maxX ? left / maxX : 0, y: maxY ? top / maxY : 0 };
+      reposition();
+    }
+    function restore(value) {
+      if (!value || !Number.isFinite(value.x) || !Number.isFinite(value.y)) return;
+      place(Math.max(0, Math.min(1, value.x)) * Math.max(0, innerWidth - bar.offsetWidth - 8),
+        Math.max(0, Math.min(1, value.y)) * Math.max(0, innerHeight - bar.offsetHeight - 8));
+    }
+    chrome.storage?.local?.get({ launcherPosition: null }).then(data => {
+      if (!signal.aborted && !touched) restore(data.launcherPosition);
+    }).catch(() => {});
+    launcher.addEventListener("pointerdown", ev => {
+      if (ev.button !== 0 || !ev.isPrimary) return;
+      touched = true; moved = false;
+      const rect = bar.getBoundingClientRect();
+      drag = { id: ev.pointerId, x: ev.clientX, y: ev.clientY, left: rect.left, top: rect.top };
+      launcher.setPointerCapture(ev.pointerId);
+    }, options);
+    launcher.addEventListener("pointermove", ev => {
+      if (!drag || ev.pointerId !== drag.id) return;
+      const dx = ev.clientX - drag.x, dy = ev.clientY - drag.y;
+      if (!moved && Math.hypot(dx, dy) < 6) return;
+      if (!moved) closeMenu();
+      moved = true;
+      place(drag.left + dx, drag.top + dy);
+      // Reparenting an inline launcher can drop capture; restore it after moving.
+      launcher.setPointerCapture(ev.pointerId);
+    }, options);
+    const finish = ev => {
+      if (!drag || ev.pointerId !== drag.id) return;
+      drag = null;
+      if (launcher.hasPointerCapture(ev.pointerId)) launcher.releasePointerCapture(ev.pointerId);
+      if (moved && position) chrome.storage?.local?.set({ launcherPosition: position }).catch(() => {});
+    };
+    launcher.addEventListener("pointerup", finish, options);
+    launcher.addEventListener("pointercancel", finish, options);
+    launcher.addEventListener("click", ev => {
+      if (moved) { moved = false; ev.preventDefault(); ev.stopImmediatePropagation(); }
+    }, { capture: true, signal });
+    window.addEventListener("resize", () => { if (position) restore(position); }, options);
   }
 
   function renderCustomMenu(menu = document.getElementById("ds-function-menu")) {
@@ -167,7 +281,7 @@
     const group = document.createElement("div"); group.className = "ds-custom-menu";
     const caption = document.createElement("div"); caption.className = "ds-menu-caption"; caption.textContent = "我的工具"; group.append(caption);
     for (const tool of tools) {
-      const button = mkBtn(tool.name, () => { closeFunctionMenu(); onAction("custom", tool); });
+      const button = menuButton(tool.name, "custom", () => { closeFunctionMenu(); onAction("custom", tool); });
       button.dataset.customToolId = tool.id; group.append(button);
     }
     menu.append(group);
@@ -210,6 +324,7 @@
         </div>
       </div>`;
     document.body.appendChild(panel);
+    syncTheme();
     panel.querySelector("#ds-close").addEventListener("click", () => (panel.style.display = "none"));
     panel.querySelector("#ds-copy").addEventListener("click", () => {
       navigator.clipboard.writeText(lastSummary || "");
@@ -302,7 +417,7 @@
   }
 
   function body() { return ensurePanel().querySelector("#ds-body"); }
-  function openPanel() { ensurePanel(); panel.style.display = "flex"; }
+  function openPanel() { ensurePanel(); syncTheme(); panel.style.display = "flex"; }
   function setPanelTitle(t) { ensurePanel().querySelector(".ds-panel-title").textContent = t; }
 
   function flash(el, text) {
@@ -379,7 +494,8 @@
   }
 
   function metaHtml(meta) {
-    return `<div class="ds-meta">${escapeHtml(meta.title)}${meta.author ? " · " + escapeHtml(meta.author) : ""}</div>`;
+    const scope = meta.sourceType === "selection" ? " · 仅选中文字" + (meta.truncated ? "（已截断至48,000字符）" : "") : "";
+    return `<div class="ds-meta">${escapeHtml(meta.title)}${scope}${meta.author ? " · " + escapeHtml(meta.author) : ""}</div>`;
   }
   function escapeHtml(s) {
     return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -417,9 +533,9 @@
   let inFlight = false;
   let transcriptCache = null; // { videoId, transcript, meta }，各按钮共用，避免重复抓字幕被限流
   let commentsCache = null;   // { videoId, comments }，结合评论分析按钮复用
-  async function onAction(mode, customTool = null) {
+  async function onAction(mode, customTool = null, selection = null) {
     // 执行中禁止重复点击：连点会叠加抓取请求，容易把自己打进 B 站风控
-    if (inFlight || window.DSPractice.busy) { openPanel(); return; }
+    if (inFlight || chatBusy || window.DSPractice.busy) { openPanel(); return; }
     panel?.querySelectorAll("#ds-copy, #ds-download").forEach(b => b.hidden = mode === "quiz");
     if (mode === "quiz") {
       const sourceAdapter = adapter;
@@ -443,14 +559,14 @@
       });
       return;
     }
-    const videoId = adapter.getVideoId();
+    const videoId = selection ? selection.meta.url : adapter.getVideoId();
     if (!videoId) return;
     inFlight = true;
-    const L = mode === "custom" ? { title: customTool.name, gen: "AI 正在按你的提示词生成…", step: "生成自定义内容" } : adapter.sourceType === "page" ? { title: "总结网页", gen: "AI 正在整理页面脉络…", step: "AI 理解与总结" } : MODES[mode] || MODES.summary;
+    const L = selection ? { title: "划词总结", gen: "AI 正在理解选中文字…", step: "总结选中文字" } : mode === "custom" ? { title: customTool.name, gen: "AI 正在按你的提示词生成…", step: "生成自定义内容" } : adapter.sourceType === "page" ? { title: "总结网页", gen: "AI 正在整理页面脉络…", step: "AI 理解与总结" } : MODES[mode] || MODES.summary;
     const wantComments = !!L.needsComments;
     lastSummary = "";
     metaLine = "";
-    const dataSteps = adapter.steps(); // 抓字幕的前几步
+    const dataSteps = selection ? ["读取选中文字"] : adapter.steps(); // 抓字幕的前几步
     // 评论模式多一步「读取评论」；末步统一是 DeepSeek 处理
     activeSteps = wantComments ? [...dataSteps, "读取评论", L.step] : [...dataSteps, L.step];
     setPanelTitle(L.title);
@@ -464,7 +580,10 @@
 
     // 抓文字稿。同一视频已抓过就复用缓存，不再重复打平台接口（防限流、更快）
     let transcript, meta;
-    if (adapter.cacheTranscript !== false && transcriptCache && transcriptCache.videoId === videoId) {
+    if (selection) {
+      transcript = selection.text;
+      meta = selection.meta;
+    } else if (adapter.cacheTranscript !== false && transcriptCache && transcriptCache.videoId === videoId) {
       transcript = transcriptCache.transcript;
       meta = transcriptCache.meta;
       renderProgress(dataSteps.length, "字幕已就绪（复用上次抓取）…", meta);
@@ -562,6 +681,14 @@
     new MutationObserver(schedule).observe(document.body, { childList: true, subtree: true });
     window.addEventListener("popstate", schedule);
   }
+
+  chrome.runtime.onMessage?.addListener((message, sender) => {
+    if (message?.type !== "SELECTION_SUMMARY" || sender.id !== chrome.runtime.id) return;
+    const snapshot = message.snapshot;
+    if (!snapshot?.text?.trim() || !/^https?:/.test(snapshot.meta?.url || "")) return;
+    closeFunctionMenu();
+    onAction("selection", null, { text: snapshot.text.slice(0, 48000), meta: { ...snapshot.meta, sourceType: "selection" } });
+  });
 
   // ---------- 共享小工具，供适配器使用 ----------
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));

@@ -1,11 +1,12 @@
 {
   "manifest_version": 3,
   "name": "AI工具箱",
-  "version": "1.7.0",
-  "description": "理解网页与视频：总结、翻译、分析、出题批改与自定义提示词工具；支持多家 AI API，导出试卷及答案。",
+  "version": "1.8.0",
+  "description": "理解网页与视频：划词总结、字幕翻译、观点分析、出题批改与自定义提示词工具；支持追问、多家 AI API，导出试卷及答案。",
   "permissions": [
     "storage",
-    "activeTab"
+    "activeTab",
+    "contextMenus"
   ],
   "host_permissions": [
     "http://*/*",

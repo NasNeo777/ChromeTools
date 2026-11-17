@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="AI工具箱 1.7.0 隐私政策：网页与视频内容、AI接口、API Key、存储、同步和删除说明。">
+  <meta name="description" content="AI工具箱 1.8.0 隐私政策：网页与视频内容、AI接口、API Key、存储、同步和删除说明。">
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'">
   <title>AI工具箱 · Privacy Policy</title>
   <style>
@@ -20,7 +20,7 @@
     <div class="brand">AI TOOLBOX / PRIVACY</div>
 <h1>隐私政策 · Privacy Policy</h1>
 <p><strong>扩展名称：AI工具箱（原 DeepSeek 工具箱）</strong></p>
-<p><strong>适用版本：1.7.0 · 更新日期：2026-11-02</strong></p>
+<p><strong>适用版本：1.8.0 · 更新日期：2026-11-17</strong></p>
 <p><a href="#%E4%B8%AD%E6%96%87%E7%89%88">中文版</a> · <a href="#english">English</a></p>
 <h2 id="中文版" lang="zh-CN">中文版</h2>
 <h3>1. 适用范围与基本说明</h3>
@@ -61,6 +61,7 @@
 </tr>
 </tbody></table></div>
 <p>选择题按参考答案在浏览器中判分，未作答题目本地记零。需要 AI 评估的填空和问答会将对应题目、参考答案、评分要点、作答及来源文字发送至所选服务商。如果全部题目均可本地判分，该次批改不会发起 AI 请求。</p>
+<p>划词总结由您右键选择“AI 总结”触发，仅把选中文字（最多 48,000 字符）发送给当前 AI 服务商，不额外读取整页正文或视频字幕。选中文字与结果保存在当前页面内存中，追问会附带该选段和相关对话。出处线索来自模型已有知识，未联网检索核验。</p>
 <p>普通网页的提取会过滤表单控件、表单区域、可编辑区域、隐藏元素，以及部分导航等非正文区域；不读取跨域 iframe、视频画面或未加载的链接内容。正文过长时会截断并标注范围。过滤并不意味着可读正文不含个人信息：页面上展示的姓名、联系信息、私人通信、业务资料或敏感网址仍可能属于被提取的内容。请在运行功能前确认您有权处理并发送这些资料。</p>
 <p>本扩展不使用浏览历史 API 建立访问记录，不通过扩展功能读取密码输入值，也不将数据用于广告画像、出售或与当前功能无关的用途。</p>
 <h3>3. 请求发送给谁</h3>
@@ -92,7 +93,7 @@
 </tr>
 <tr>
 <td><code>chrome.storage.local</code></td>
-<td>自定义工具的名称、提示词、适用范围和启用状态</td>
+<td>自定义工具的名称、提示词、适用范围和启用状态，以及工具箱按钮位置、上次有效的出题设置（难度、题型和题数）</td>
 <td>保存在当前浏览器配置中，不由本扩展自动跨设备同步</td>
 </tr>
 <tr>
@@ -113,7 +114,7 @@
 <p>如需清除当前页面中的结果和作答，可完整刷新或关闭该页面。请先导出需要保留的内容。卸载扩展会清除该浏览器配置中的扩展存储；同步副本的处理还取决于浏览器同步状态，必要时请在其他设备与浏览器同步设置中核对。</p>
 <p>卸载扩展、删除配置或关闭页面都不会撤销服务商颁发的 API Key。如需阻止该 Key 继续使用，请在对应服务商的控制台撤销或轮换。已发送数据的查询或删除请求应向接收它的服务商提出；本地下载文件和剪贴板内容需自行清理。</p>
 <h3>6. 权限与安全措施</h3>
-<p>当前版本声明 <code>storage</code>、<code>activeTab</code>，以及 HTTP/HTTPS 主机访问范围。<code>storage</code> 用于配置和自定义工具；活动页信息用于在设置面板提示工具可用性；网站访问用于展示入口、按需提取正文、访问视频平台接口，以及请求您配置的 AI 服务。</p>
+<p>当前版本声明 <code>storage</code>、<code>activeTab</code>、<code>contextMenus</code>，以及 HTTP/HTTPS 主机访问范围。<code>storage</code> 用于配置、自定义工具和按钮位置；右键菜单权限用于提供划词总结入口；活动页信息用于在设置面板提示工具可用性；网站访问用于展示入口、按需提取正文、访问视频平台接口，以及请求您配置的 AI 服务。</p>
 <p>AI 接口地址必须使用 HTTPS，AI 请求不跟随重定向。所有执行的扩展脚本均随安装包提供；自定义提示词属于文本配置，不是可执行插件。模型输出按允许的文档标签和属性展示，不执行其中的脚本或加载其中的远程资源。这些措施不能保证设备、浏览器或所配置的第三方服务绝对安全。</p>
 <p>普通 HTTP 网页本身的传输安全由该网站决定，扩展使用 HTTPS 请求 AI 并不使原网页变为安全站点。</p>
 <h3>7. 反馈、变更与联系</h3>
@@ -158,6 +159,7 @@
 </tr>
 </tbody></table></div>
 <p>Multiple-choice answers and unanswered questions are scored locally. When AI grading is needed, the relevant short-answer or fill-in questions, reference answers, rubrics, submitted answers and source text are sent to the selected provider. A grading submission handled entirely by local scoring makes no AI request.</p>
+<p>Selection summaries run only when you choose AI Summary from the context menu. Only the selected text (up to 48,000 characters) is sent to the selected AI provider, without additionally extracting the full page or video transcript. The excerpt and results remain in page memory; follow-up requests include the excerpt and relevant conversation. Optional attribution is based on model knowledge without online verification.</p>
 <p>Page extraction filters out form controls, form areas, editable regions, hidden elements and some navigation content. It does not read cross-origin frames, video pixels or unloaded links. Long source text can be truncated with a notice. Filtering does not guarantee that extracted text contains no personal information: visible names, contact details, private communications, business information or sensitive URLs may be included. Confirm that you are entitled to process and transmit the material before running a feature.</p>
 <p>The extension does not use the browsing history API to build a visit log, read password input values through its features, or use data for advertising profiles, sale or purposes unrelated to the requested features.</p>
 <h3>3. Recipients and third-party services</h3>
@@ -179,7 +181,7 @@
 </tr>
 <tr>
 <td><code>chrome.storage.local</code></td>
-<td>Custom tool names, prompts, scopes and enabled states persist in the current browser profile without automatic cross-device synchronization by this extension</td>
+<td>Custom tool names, prompts, scopes, enabled states, launcher position and last valid quiz settings (difficulty, types and count) persist in the current browser profile without automatic cross-device synchronization by this extension</td>
 </tr>
 <tr>
 <td>Page memory</td>
@@ -197,14 +199,14 @@
 <p>A full reload or tab closure clears the current page state; export anything you wish to retain first. Uninstalling removes extension storage from that browser profile. Handling of synchronized copies also depends on browser sync state, so check other devices and synchronization settings as needed.</p>
 <p>Uninstalling, deleting settings or closing a tab does not revoke a provider-issued API key. Revoke or rotate it in the provider&#39;s console when necessary. Requests about data already transmitted must be directed to its recipient. Clear local downloads and clipboard content yourself.</p>
 <h3>6. Permissions and security measures</h3>
-<p>Version 1.7.0 declares <code>storage</code>, <code>activeTab</code> and HTTP/HTTPS host access. Storage supports settings and custom tools; active-page information supports tool availability indicators; website access supports the launcher, requested text extraction, video platform requests and calls to configured AI services.</p>
+<p>Version 1.8.0 declares <code>storage</code>, <code>activeTab</code>, <code>contextMenus</code> and HTTP/HTTPS host access. Storage supports settings, custom tools and launcher position; context menu access provides the selection summary action; active-page information supports tool availability indicators; website access supports the launcher, requested text extraction, video platform requests and calls to configured AI services.</p>
 <p>AI endpoints must use HTTPS and AI requests do not follow redirects. Executable extension scripts are packaged with the extension. Custom prompts are text settings, not executable plugins. Generated documents are rendered through an allowed set of tags and attributes without executing embedded scripts or loading embedded remote resources. These measures do not guarantee absolute security of your device, browser or third-party endpoint.</p>
 <p>An ordinary HTTP page&#39;s transport security depends on that website. Sending AI requests over HTTPS does not secure the original page connection.</p>
 <h3>7. Contact and changes</h3>
 <p>For feature feedback, use <a href="https://github.com/NasNeo777/ChromeTools/issues">GitHub Issues</a>. For privacy questions, email <a href="mailto:bigbugbbb@gmail.com">bigbugbbb@gmail.com</a>. If you voluntarily email or submit an issue, the developer receives the content you choose to include. Public issues are visible to others; never include full API keys, private page text or sensitive information.</p>
 <p>This policy will be updated when features or data handling change, with the revision date shown above. Historical versions are retained for reference; this policy describes the extension version identified in this document.</p>
 </section>
-    <div class="footer">AI工具箱 · 1.7.0 · 2026-11-02</div>
+    <div class="footer">AI工具箱 · 1.8.0 · 2026-11-17</div>
   </main>
 </body>
 </html>
