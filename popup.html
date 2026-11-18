@@ -36,6 +36,16 @@
     <!-- 工具卡片（由 popup.js 动态渲染） -->
     <div id="tool-list"></div>
 
+    <section class="card custom-module" aria-labelledby="selection-title">
+      <h2 id="selection-title">划词提示词</h2>
+      <p class="card-desc">选中文字，右键点击「AI 总结」，按你的要求处理选段。</p>
+      <label for="selection-prompt">提示词</label>
+      <textarea id="selection-prompt" rows="5" maxlength="12000" placeholder="例如：将选中文字翻译成中文，解释重点词汇，并给出两个例句。"></textarea>
+      <div class="hint">自动附带选中文字，无需占位符。留空使用默认总结与释义；最多 12,000 字符。</div>
+      <div class="custom-form-actions"><button type="button" id="selection-save">保存划词提示词</button><button type="button" id="selection-reset">恢复默认</button></div>
+      <p id="selection-status" class="custom-status" role="status" aria-live="polite"></p>
+    </section>
+
     <section class="card custom-module" aria-labelledby="custom-module-title">
       <div class="custom-module-head"><div><div class="eyebrow">YOUR TOOLS</div><h2 id="custom-module-title">自定义工具</h2></div><span id="custom-count" class="custom-scope-label">0 / 20</span></div>
       <p class="card-desc">保存提示词，在功能菜单生成自己的按钮。</p>
@@ -60,6 +70,7 @@
   <footer class="popup-footer">
     <button class="save" id="save">保存设置</button>
     <div class="status" id="status" role="status" aria-live="polite"></div>
+    <a class="source-link" href="https://github.com/NasNeo777/ChromeTools" target="_blank" rel="noopener noreferrer">开源仓库 · GitHub ↗</a>
   </footer>
 
   <script src="custom-tools.js"></script>

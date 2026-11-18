@@ -13,9 +13,16 @@
 .ds-summary-btn:last-child{background:var(--ds-accent);color:#fff}
 .ds-panel{position:fixed;top:76px;right:20px;width:510px;max-width:calc(100vw - 32px);max-height:calc(100dvh - 100px);z-index:9999;display:flex;flex-direction:column;background:var(--ds-bg);border:1px solid var(--ds-line);border-radius:24px;box-shadow:0 24px 80px #243b2e26,0 2px 8px #243b2e0a;overflow:hidden;isolation:isolate}
 .ds-panel-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:19px 22px;background:var(--ds-head);backdrop-filter:blur(24px) saturate(130%);box-shadow:inset 0 1px 0 #ffffffb3}
+.ds-panel-head{cursor:grab;touch-action:none;user-select:none}
+.ds-panel-head:active{cursor:grabbing}
+.ds-panel-head>div:not(.ds-panel-actions){flex:1;min-width:0}
+#ds-collapse{flex-shrink:0}
 .ds-panel-kicker{display:block;font-size:9px;font-weight:650;letter-spacing:.12em;color:var(--ds-muted);margin-bottom:3px}
 .ds-panel-title{display:block;font-size:17px;font-weight:650;letter-spacing:-.025em;line-height:1.4;overflow-wrap:anywhere}
 .ds-panel-actions{display:flex;gap:5px;align-items:center}
+.ds-panel.ds-collapsed{width:320px}
+.ds-panel.ds-collapsed #ds-body,.ds-panel.ds-collapsed #ds-chat,.ds-panel.ds-collapsed #ds-copy,.ds-panel.ds-collapsed #ds-download{display:none!important}
+#ds-resume[hidden]{display:none!important}
 .ds-icon-btn{font-size:12px!important;color:var(--ds-muted);background:transparent;border:0;border-radius:8px;padding:6px 9px}
 .ds-icon-btn:hover{background:var(--ds-line);color:var(--ds-text)}
 #ds-close{font-size:22px!important;line-height:1;padding:5px 8px}
@@ -79,11 +86,35 @@
 
 /* Header text must not inherit player/site colors on a light or dark material. */
 #ds-result-panel .ds-panel-head{color:var(--ds-text);-webkit-text-fill-color:currentColor}
-#ds-result-panel .ds-panel-head>div:first-child{min-width:0}
+#ds-result-panel .ds-panel-head{padding:12px 16px;gap:14px;background:var(--ds-bg);box-shadow:none}
+#ds-result-panel .ds-panel-heading{min-width:0}
+#ds-result-panel .ds-panel-kicker{font-size:8px;font-weight:550;letter-spacing:.12em;margin-bottom:3px}
+#ds-result-panel .ds-panel-title{font-size:16px;line-height:1.4;font-weight:650;letter-spacing:-.02em}
+#ds-result-panel.ds-collapsed{border-radius:18px;box-shadow:0 8px 24px -8px #243b2e24,0 1px 3px #243b2e08}
+#ds-result-panel.ds-collapsed .ds-panel-head{padding:8px 12px}
+#ds-result-panel.ds-collapsed .ds-panel-title{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#ds-result-panel #ds-close{display:grid;place-items:center;width:32px;height:32px;padding:0;margin-left:5px;border-radius:9px;background:transparent;border:0;font-size:19px!important;font-weight:400}
+#ds-result-panel #ds-close:hover{background:var(--ds-wash)}
 #ds-result-panel .ds-panel-title{color:var(--ds-text);-webkit-text-fill-color:currentColor;text-shadow:none;opacity:1}
 #ds-result-panel .ds-panel-kicker,#ds-result-panel .ds-icon-btn{color:var(--ds-muted);-webkit-text-fill-color:currentColor;text-shadow:none;opacity:1}
 #ds-result-panel .ds-icon-btn:hover{color:var(--ds-text)}
 #ds-result-panel .ds-panel-actions{flex-shrink:0}
+
+/* A distinct primary control keeps collapse visually separate from dismissal. */
+#ds-result-panel #ds-collapse{--ds-collapse-bg:#fcf0e5;--ds-collapse-hover:#f8e4d1;--ds-collapse-pressed:#f2d7be;--ds-collapse-text:#9a4c20;position:relative;display:flex;align-items:center;justify-content:center;gap:6px;min-width:70px;min-height:44px;padding:10px;border:0;border-radius:12px;background:transparent;color:var(--ds-collapse-text);font-weight:600;line-height:1.4;white-space:nowrap;box-shadow:none;touch-action:manipulation}
+#ds-result-panel #ds-collapse::before{content:"";position:absolute;inset:5px 0;background:var(--ds-collapse-bg);border-radius:10px;pointer-events:none}
+#ds-result-panel[data-ds-theme=dark] #ds-collapse{--ds-collapse-bg:#3d3026;--ds-collapse-hover:#4c392b;--ds-collapse-pressed:#59402d;--ds-collapse-text:#efb181}
+#ds-result-panel .ds-collapse-icon{position:relative;display:block;width:15px;height:15px;flex-shrink:0;pointer-events:none}
+#ds-result-panel .ds-collapse-label{position:relative;color:inherit;font:inherit;letter-spacing:.025em;pointer-events:none}
+#ds-result-panel .ds-collapse-arrow{transform-box:fill-box;transform-origin:center}
+#ds-result-panel.ds-collapsed .ds-collapse-arrow{transform:rotate(180deg)}
+#ds-result-panel #ds-collapse:hover{background:transparent;color:var(--ds-collapse-text)}
+#ds-result-panel #ds-collapse:hover::before{background:var(--ds-collapse-hover)}
+#ds-result-panel #ds-collapse:active{transform:scale(.97);transition:none}
+#ds-result-panel #ds-collapse:active::before{background:var(--ds-collapse-pressed)}
+#ds-result-panel #ds-collapse:focus-visible{outline:2px solid var(--ds-collapse-text);outline-offset:2px}
+@media(prefers-reduced-motion:reduce){#ds-result-panel #ds-collapse:active{transform:none}}
+@media(prefers-contrast:more){#ds-result-panel #ds-collapse::before{border:1px solid currentColor}}
 
 .ds-menu-surface{box-sizing:border-box;text-align:left;-webkit-text-fill-color:currentColor}.ds-menu-surface::backdrop{background:transparent;pointer-events:none}
 

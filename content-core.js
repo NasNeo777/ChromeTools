@@ -35,6 +35,7 @@
   let chatHistory = [];
   let chatBusy = false;
   let customTools = [], curCustomTool = null;
+  let curSelectionPrompt;
   let closeFunctionMenu = () => {};
   let disposeFunctionMenu = () => {};
   let repositionFunctionMenu = () => {};
@@ -131,6 +132,10 @@
     const caption = document.createElement("div"); caption.className = "ds-menu-caption";
     caption.textContent = adapter.sourceType === "page" ? "当前页面 · 正文阅读" : "当前视频 · 字幕学习";
     menu.append(caption);
+    const resume = menuButton("继续查看上次内容", "summary", () => { setMenu(false); openPanel(); });
+    resume.id = "ds-resume";
+    resume.hidden = true;
+    menu.append(resume);
     const actions = adapter.sourceType === "page" ? [["总结网页", "summary"], ["出题自测", "quiz"]] : [["总结视频", "summary"], ["翻译字幕", "translate"], ["分析观点", "critique"], ["结合评论分析", "comments"], ["出题自测", "quiz"]];
     for (const [label, mode] of actions) menu.append(menuButton(label, mode, () => { setMenu(false); onAction(mode); }));
     let positionFrame = 0;
@@ -171,10 +176,11 @@
       if (open && (!launcher.isConnected || !menu.isConnected)) return;
       if (open) {
         syncTheme();
+        resume.hidden = !panel?.isConnected;
         menu.hidden = false;
         if (supportsPopover && !menu.matches(":popover-open")) menu.showPopover();
         positionMenu();
-        if (!menu.hidden) menu.querySelector("button")?.focus({ preventScroll: true });
+        if (!menu.hidden) menu.querySelector("button:not([hidden])")?.focus({ preventScroll: true });
       } else {
         if (supportsPopover && menu.matches(":popover-open")) menu.hidePopover();
         menu.hidden = true;
@@ -186,7 +192,7 @@
       if (ev.key === "ArrowDown" || ev.key === "ArrowUp") {
         ev.preventDefault();
         if (menu.hidden) return setMenu(true);
-        const buttons = [...menu.querySelectorAll("button")], index = buttons.indexOf(document.activeElement);
+        const buttons = [...menu.querySelectorAll("button:not([hidden])")], index = buttons.indexOf(document.activeElement);
         buttons[(index + (ev.key === "ArrowDown" ? 1 : -1) + buttons.length) % buttons.length].focus({ preventScroll: true });
         document.activeElement.scrollIntoView({ block: "nearest" });
       }
@@ -300,6 +306,46 @@
   loadCustomTools();
 
   // ---------- 面板 ----------
+  function setupPanelDrag(el) {
+    const header = el.querySelector(".ds-panel-head");
+    let drag = null, position = null;
+    header.title = "拖动调整面板位置";
+    function place(left, top) {
+      if (!el.getClientRects().length) return;
+      const rect = el.getBoundingClientRect();
+      const maxX = Math.max(0, innerWidth - rect.width - 8);
+      const maxY = Math.max(0, innerHeight - rect.height - 8);
+      position = {
+        left: Math.max(Math.min(8, maxX), Math.min(left, maxX)),
+        top: Math.max(Math.min(8, maxY), Math.min(top, maxY))
+      };
+      Object.assign(el.style, { left: position.left + "px", top: position.top + "px", right: "auto", bottom: "auto" });
+    }
+    header.addEventListener("pointerdown", ev => {
+      if (ev.button !== 0 || !ev.isPrimary || ev.target.closest("button")) return;
+      const rect = el.getBoundingClientRect();
+      drag = { id: ev.pointerId, x: ev.clientX, y: ev.clientY, left: rect.left, top: rect.top };
+      header.setPointerCapture(ev.pointerId);
+      ev.preventDefault();
+    });
+    header.addEventListener("pointermove", ev => {
+      if (!drag || ev.pointerId !== drag.id) return;
+      place(drag.left + ev.clientX - drag.x, drag.top + ev.clientY - drag.y);
+    });
+    const finish = ev => {
+      if (!drag || ev.pointerId !== drag.id) return;
+      drag = null;
+      if (header.hasPointerCapture(ev.pointerId)) header.releasePointerCapture(ev.pointerId);
+    };
+    header.addEventListener("pointerup", finish);
+    header.addEventListener("pointercancel", finish);
+    header.addEventListener("lostpointercapture", () => { drag = null; });
+    const keepInView = () => { if (position) place(position.left, position.top); };
+    // Expanding, streaming content and viewport changes can all grow the panel.
+    new ResizeObserver(keepInView).observe(el);
+    window.addEventListener("resize", keepInView);
+  }
+
   function ensurePanel() {
     if (panel && document.body.contains(panel)) return panel;
     panel = document.createElement("div");
@@ -307,7 +353,11 @@
     panel.id = "ds-result-panel";
     panel.innerHTML = `
       <div class="ds-panel-head">
-        <div><span class="ds-panel-kicker">AI TOOLBOX / 阅读与学习</span><span class="ds-panel-title">总结视频</span></div>
+        <button class="ds-icon-btn" id="ds-collapse" aria-label="收起面板" aria-expanded="true" aria-controls="ds-body ds-chat">
+          <svg class="ds-collapse-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M9 4v16"/><path class="ds-collapse-arrow" d="m16 9-3 3 3 3"/></svg>
+          <span class="ds-collapse-label">收起</span>
+        </button>
+        <div class="ds-panel-heading"><span class="ds-panel-kicker">AI TOOLBOX</span><span class="ds-panel-title">总结视频</span></div>
         <div class="ds-panel-actions">
           <button class="ds-icon-btn" id="ds-copy">复制</button>
           <button class="ds-icon-btn" id="ds-download">下载</button>
@@ -324,7 +374,9 @@
         </div>
       </div>`;
     document.body.appendChild(panel);
+    setupPanelDrag(panel);
     syncTheme();
+    panel.querySelector("#ds-collapse").addEventListener("click", () => setPanelCollapsed(!panel.classList.contains("ds-collapsed")));
     panel.querySelector("#ds-close").addEventListener("click", () => (panel.style.display = "none"));
     panel.querySelector("#ds-copy").addEventListener("click", () => {
       navigator.clipboard.writeText(lastSummary || "");
@@ -390,7 +442,7 @@
     const port = chrome.runtime.connect({ name: "summarize" });
     port.postMessage({
       type: "CHAT", mode: curMode, transcript: curTranscript,
-      comments: curComments, meta: curMeta, history: chatHistory, customTool: curCustomTool
+      comments: curComments, meta: curMeta, history: chatHistory, customTool: curCustomTool, selectionPrompt: curSelectionPrompt
     });
     port.onMessage.addListener((m) => {
       if (m.type === "chunk") {
@@ -417,8 +469,19 @@
   }
 
   function body() { return ensurePanel().querySelector("#ds-body"); }
-  function openPanel() { ensurePanel(); syncTheme(); panel.style.display = "flex"; }
-  function setPanelTitle(t) { ensurePanel().querySelector(".ds-panel-title").textContent = t; }
+  function setPanelCollapsed(collapsed) {
+    panel.classList.toggle("ds-collapsed", collapsed);
+    const button = panel.querySelector("#ds-collapse");
+    button.querySelector(".ds-collapse-label").textContent = collapsed ? "展开" : "收起";
+    button.setAttribute("aria-label", collapsed ? "展开面板" : "收起面板");
+    button.setAttribute("aria-expanded", String(!collapsed));
+  }
+  function openPanel() { ensurePanel(); setPanelCollapsed(false); syncTheme(); panel.style.display = "flex"; }
+  function setPanelTitle(t) {
+    const title = ensurePanel().querySelector(".ds-panel-title");
+    title.textContent = t;
+    title.title = t;
+  }
 
   function flash(el, text) {
     const old = el.textContent;
@@ -477,7 +540,6 @@
 
   // ---------- 进度渲染 ----------
   function renderProgress(currentStep, label, meta) {
-    openPanel();
     if (meta?.title) { lastTitle = meta.title; metaLine = metaHtml(meta); }
     let html = '<div class="ds-steps">';
     activeSteps.forEach((s, i) => {
@@ -570,6 +632,7 @@
     // 评论模式多一步「读取评论」；末步统一是 DeepSeek 处理
     activeSteps = wantComments ? [...dataSteps, "读取评论", L.step] : [...dataSteps, L.step];
     setPanelTitle(L.title);
+    openPanel();
     hideChat();
     renderProgress(1, "正在启动…");
 
@@ -624,6 +687,7 @@
 
     // 记下本次结果的上下文，供「追问」时连同发给后台
     curMode = mode; curMeta = { ...meta, url: meta.url || location.href }; curTranscript = transcript; curComments = comments; curCustomTool = customTool;
+    curSelectionPrompt = undefined;
 
     // 末步：后台流式调用 DeepSeek
     renderProgress(activeSteps.length, L.gen, meta);
@@ -637,6 +701,7 @@
       } else if (m.type === "done") {
         lastTitle = m.meta?.title || lastTitle;
         if (mode === "custom" && m.customTool) curCustomTool = m.customTool;
+        if (mode === "selection") curSelectionPrompt = m.selectionPrompt;
         scheduleStreamRender(true);
         // 生成完毕：用本次结果作为对话起点，开放追问
         chatHistory = lastSummary ? [{ role: "assistant", content: lastSummary }] : [];

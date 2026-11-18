@@ -119,4 +119,32 @@ async function init() {
   } catch (err) { showStatus("读取设置失败：" + err.message, false); }
 }
 
-document.addEventListener("DOMContentLoaded", init);
+async function initSelectionPrompt() {
+  const input = $("selection-prompt"), status = $("selection-status");
+  const buttons = [$("selection-save"), $("selection-reset")];
+  const message = (text, error = false) => {
+    status.textContent = text;
+    status.className = "custom-status" + (error ? " error" : "");
+  };
+  buttons.forEach(button => { button.disabled = true; });
+  async function persist(reset) {
+    const prompt = reset ? "" : input.value.trim();
+    if (prompt.length > 12000) return message("提示词最多 12,000 字符。", true);
+    buttons.forEach(button => { button.disabled = true; });
+    try {
+      await chrome.storage.local.set({ selectionPrompt: prompt });
+      input.value = prompt;
+      message(prompt ? "划词提示词已保存，下次划词时生效。" : "已恢复默认总结与释义。 ");
+    } catch (err) { message("保存失败：" + err.message, true); }
+    finally { buttons.forEach(button => { button.disabled = false; }); }
+  }
+  try {
+    const stored = await chrome.storage.local.get({ selectionPrompt: "" });
+    input.value = typeof stored.selectionPrompt === "string" ? stored.selectionPrompt : "";
+    buttons[0].addEventListener("click", () => persist(false));
+    buttons[1].addEventListener("click", () => persist(true));
+    buttons.forEach(button => { button.disabled = false; });
+  } catch (err) { message("读取划词提示词失败：" + err.message, true); }
+}
+
+document.addEventListener("DOMContentLoaded", () => { init(); initSelectionPrompt(); });
